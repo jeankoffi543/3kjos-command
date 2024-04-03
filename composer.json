@@ -18,8 +18,24 @@
   ],
   "require": {
     "php": "^7.2|^8.0",
-    "illuminate/support": "^6.0|^7.0|^8.0"
+    "spatie/laravel-package-tools": "^1.14.0",
+    "laravel/framework": "^10.0",
+    "illuminate/support": "*"
   },
+  "require-dev": {
+    "laravel/pint": "^1.0",
+    "nunomaduro/collision": "^7.8",
+    "nunomaduro/larastan": "^2.0.1",
+    "orchestra/testbench": "^8.8",
+    "pestphp/pest": "^2.20",
+    "pestphp/pest-plugin-arch": "^2.0",
+    "pestphp/pest-plugin-laravel": "^2.0",
+    "phpro/grumphp": "^2.3",
+    "phpstan/extension-installer": "^1.1",
+    "phpstan/phpstan-deprecation-rules": "^1.0",
+    "phpstan/phpstan-phpunit": "^1.0",
+    "spatie/laravel-ray": "^1.26"
+},
   "autoload": {
     "psr-4": {
       "Kjos\\Command\\": "src/"
@@ -30,6 +46,13 @@
       "providers": [
         "Kjos\\Command\\CommandServiceProvider"
       ]
+    }
+  },
+  "config": {
+    "allow-plugins": {
+      "pestphp/pest-plugin": true,
+      "phpro/grumphp": true,
+      "phpstan/extension-installer": true
     }
   }
 }
