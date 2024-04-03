@@ -1,0 +1,35 @@
+{
+  "name": "kjos/command",
+  "description": "Command tool for Laravel and other",
+  "authors": [
+    {
+      "name": "Koffi Konan Kan Jean Sylvain",
+      "email": "jeankoffi543@gmail.com"
+    }
+  ],
+  "repositories": [
+    {
+      "type": "path",
+      "url": "/home/hillflame/www/www/.freelance/kjos-command",
+      "options": {
+        "symlink": true
+      }
+    }
+  ],
+  "require": {
+    "php": "^7.2|^8.0",
+    "illuminate/support": "^6.0|^7.0|^8.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "Kjos\\Command\\": "src/"
+    }
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "Kjos\\Command\\CommandServiceProvider"
+      ]
+    }
+  }
+}
