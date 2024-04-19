@@ -18,8 +18,8 @@
   ],
   "require": {
     "php": "^7.0|^8.0",
-    "illuminate/support": "^8.0|^9.0",
-    "illuminate/database": "^8.0|^9.0",
+    "illuminate/support": "^8.0|^11.0",
+    "illuminate/database": "^8.0|^11.0",
     "illuminate/console": "*",
     "illuminate/routing": "*"
 },
@@ -61,6 +61,7 @@
     "nunomaduro/collision": "^5.0",
     "fakerphp/faker": "^1.23",
     "pestphp/pest": "^1.23",
-    "pestphp/pest-plugin-laravel": "^1.4"
+    "pestphp/pest-plugin-laravel": "^1.4",
+    "phpro/grumphp": "^2.5"
   }
 }
