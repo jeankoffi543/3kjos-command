@@ -1,13 +1,13 @@
 <?php
 
-namespace kjos\Command;
+namespace Kjos\Command;
 
 use Illuminate\Support\ServiceProvider;
 
 class CommandServiceProvider extends ServiceProvider
 {
     protected $commands = [
-
+        "KjosMakeRouteApi" => \Kjos\Command\Commands\KjosMakeRouteApiCommand::class,
     ];
 
     public function boot()
