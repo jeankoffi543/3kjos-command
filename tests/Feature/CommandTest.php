@@ -1,5 +1,8 @@
 <?php
-
+/**
+ * @var $this
+ *  
+ * */ 
 test('example', function () {
 
     $fieldTypes = [
