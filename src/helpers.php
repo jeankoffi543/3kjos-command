@@ -14,19 +14,24 @@ if (!function_exists('getRootNamespace')) {
 if (!function_exists('generateApi')) {
    function generateApi($prefix, $force, $apiRoutePath)
    {
-      file_put_contents($apiRoutePath, "");
 
       // Load the current contents of api.php
       $apiRoutesContents = app()->files->get($apiRoutePath);
+      if (!$apiRoutePath) {
+         app()->abort(400, "api.php doesn't exist");         
+         return true;
+      }
+      
       $rootNamespace = getRootNamespace();
       $nameSpaceRootDirectory = getDirectoryFromNamespace($rootNamespace);
       $controllersDirectory = findBasesDirectory($nameSpaceRootDirectory, 'Controllers');
 
       $controllersDirectoryNamespace = str_replace('/', '\\', $controllersDirectory);
+      $prefixLower = Str::lower($prefix);
 
       // Check if prefix already exists in api.php
-      if (!$force && Str::contains($apiRoutesContents, "'prefix' => '{$prefix}'")) {
-         app()->error("The prefix '{$prefix}' already exists in api.php");
+      if (Str::contains($apiRoutesContents, "'prefix' => '{$prefixLower}'")) {
+         app()->abort(400, "The prefix '{$prefix}' already exists in api.php");         
          return true;
       }
       $controllerClass = $rootNamespace .  $controllersDirectoryNamespace . "\\" . Str::studly($prefix) . "Controller";
@@ -44,15 +49,19 @@ if (!function_exists('generateApi')) {
           });
           ROUTES;
 
-      $header = <<< HEADER
+      $php = <<< PHP
       <?php
-      // Routes for $prefix
       use Illuminate\Support\Facades\Route;
 
-      HEADER;
+      PHP;
 
       // Write the new routes to api.php
-      app()->files->append($apiRoutePath, $header);
+      if (!Str::contains($apiRoutesContents, "<?php")) {
+         app()->files->append($apiRoutePath, $php);
+      }
+      if (!Str::contains($apiRoutesContents, "use Illuminate\Support\Facades\Route;")) {
+         appendUseStatement($apiRoutePath, "Illuminate\Support\Facades\Route");
+      }
       app()->files->append($apiRoutePath, $newRoutes);
 
    }
@@ -201,7 +210,7 @@ if (!function_exists('findBasesDirectory')) {
    }
 }
 
-if (!function_exists('appendUseStateMent')) {
+if (!function_exists('appendUseStatement')) {
    function appendUseStatement($filePath, $newUseStatement)
    {
       // Read the current contents of the file
@@ -212,17 +221,11 @@ if (!function_exists('appendUseStateMent')) {
          return;
       }
 
-      // Regex pattern to match the last use statement
-      $pattern = '/(use [^;]+;)(?!.*\buse\b)/s';
-
-      // Replacement string with new use statement
-      $replacement = "$1\n\tuse $newUseStatement;";
-
-      // Replace the content by adding the new use statement after the last match
-      $newFileContents = preg_replace($pattern, $replacement, $fileContents);
+      // Append the new use statement after the opening PHP tag
+      $newFileContents = preg_replace('/^<\?php\s*/', "<?php\nuse $newUseStatement;", $fileContents, 1);
 
       // Save the new contents back to the file
-      file_put_contents($filePath,  $newFileContents);
+      file_put_contents($filePath, $newFileContents);
    }
 }
 
