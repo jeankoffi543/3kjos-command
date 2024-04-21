@@ -2,11 +2,11 @@
 
 # INSTALLATION
 
-```composer require kjos/command
+```composer require kjos/command```
 
 # USAGE
 
-```php artisan kjos:make:api name
+```php artisan kjos:make:api name```
 
 ### Tip
 
