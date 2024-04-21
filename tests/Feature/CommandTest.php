@@ -16,7 +16,7 @@ test('example', function () {
     ];
     
 
-    $this->artisan('kjos:make:api client')
+    $this->artisan('kjos:make:api fournisseurs')
     ->expectsQuestion('Do you want to create database fields?', 'yes')
     ->expectsChoice(
         'use arrow to select your database field type. Ex: string', // The question being asked
@@ -24,15 +24,15 @@ test('example', function () {
         $fieldTypes
     )
     ->expectsQuestion('Enter the field length. Ex: 255', 20)
-    ->expectsQuestion('Enter your database field name. Ex: name', 'name')
+    ->expectsQuestion('Enter your database field name. Ex: name', 'client_id')
     ->expectsQuestion('Field is nullable?', 'yes')
     ->expectsQuestion('Field is unique?', 'no')
     ->expectsQuestion('Field is can be indexed?', 'no')
     ->expectsQuestion('Does the field have a default value?', 'yes')
-    ->expectsQuestion('Enter the default value:', 'Koffi')
+    ->expectsQuestion('Enter the default value:', 'null')
     ->expectsQuestion('Should the table have timestamps (created_at and updated_at)?', 'yes')
     ->expectsQuestion('Would you like to add a comment to the field?', 'yes')
-    ->expectsQuestion('Enter the field comment:', 'test tes test ')
+    ->expectsQuestion('Enter the field comment', 'test tes test ')
     ->expectsQuestion('Is the field a foreign key?', 'yes')
     ->expectsQuestion('Enter the related table name:', 'address')
     ->expectsQuestion("Enter the related table field name, typically 'id':", 'address_id')    
@@ -49,7 +49,7 @@ test('example', function () {
     ->expectsQuestion('Field is unique?', 'yes')
     ->expectsQuestion('Field is can be indexed?', 'yes')
     ->expectsQuestion('Does the field have a default value?', 'no')
-    ->expectsQuestion('Should the table have timestamps (created_at and updated_at)?', 'yes')
+    // ->expectsQuestion('Should the table have timestamps (created_at and updated_at)?', 'yes')
     ->expectsQuestion('Would you like to add a comment to the field?', 'no')
     ->expectsQuestion('Is the field a foreign key?', 'no')
     ->expectsQuestion('Do you want to create database fields?', 'yes')
@@ -65,9 +65,9 @@ test('example', function () {
     ->expectsQuestion('Field is unique?', 'no')
     ->expectsQuestion('Field is can be indexed?', 'no')
     ->expectsQuestion('Does the field have a default value?', 'no')
-    ->expectsQuestion('Should the table have timestamps (created_at and updated_at)?', 'yes')
+    // ->expectsQuestion('Should the table have timestamps (created_at and updated_at)?', 'yes')
     ->expectsQuestion('Would you like to add a comment to the field?', 'yes')
-    ->expectsQuestion('Enter the field comment:', 'test tes test ')
+    ->expectsQuestion('Enter the field comment', 'test tes test ')
     ->expectsQuestion('Is the field a foreign key?', 'yes')
     ->expectsQuestion('Enter the related table name:', 'partner')
     ->expectsQuestion("Enter the related table field name, typically 'id':", 'id')    

@@ -23,21 +23,17 @@ if (!function_exists('generateApi')) {
       $controllersDirectory = findBasesDirectory($nameSpaceRootDirectory, 'Controllers');
 
       $controllersDirectoryNamespace = str_replace('/', '\\', $controllersDirectory);
-      // dd($controllersDirectory);
 
       // Check if prefix already exists in api.php
-      // if (!$force && Str::contains($apiRoutesContents, "'prefix' => '{$prefix}'")) {
-      //    app()->error("The prefix '{$prefix}' already exists in api.php");
-      //    return true;
-      // }
+      if (!$force && Str::contains($apiRoutesContents, "'prefix' => '{$prefix}'")) {
+         app()->error("The prefix '{$prefix}' already exists in api.php");
+         return true;
+      }
       $controllerClass = $rootNamespace .  $controllersDirectoryNamespace . "\\" . Str::studly($prefix) . "Controller";
 
       // Add the new routes to api.php using the array syntax
       $newRoutes = <<<ROUTES
-          <?php
-          \n// Routes for $prefix
-          \nuse Illuminate\Support\Facades\Route;
-  
+          
           \n// Routes for $prefix
               Route::group(['prefix' => '{$prefix}'], function () {
               Route::get('/', [{$controllerClass}::class, 'index']);
@@ -48,8 +44,17 @@ if (!function_exists('generateApi')) {
           });
           ROUTES;
 
+      $header = <<< HEADER
+      <?php
+      // Routes for $prefix
+      use Illuminate\Support\Facades\Route;
+
+      HEADER;
+
       // Write the new routes to api.php
-      app()->files->put($apiRoutePath, $newRoutes);
+      app()->files->append($apiRoutePath, $header);
+      app()->files->append($apiRoutePath, $newRoutes);
+
    }
 }
 
@@ -696,6 +701,7 @@ if (!function_exists('generateMigrations')) {
 
             // Now check if the string '$table->timestamps()' exists in the file content
             $containsTimestamps = strpos($migrationContent, '$table->timestamps()') !== false;
+
             return $containsTimestamps;
          }
          return false;

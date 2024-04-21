@@ -29,6 +29,8 @@ class KjosMakeRouteApiCommand extends GeneratorCommand
     {name : the prefix of the site}
     {--f|force : Force api creation if it already exists}';
 
+    private ?array $runtimeDatas = [];
+
     public function handle()
     {
         $prefix = $this->argument('name');
@@ -61,9 +63,10 @@ class KjosMakeRouteApiCommand extends GeneratorCommand
     {
         $databaseFields = [];
 
-
+        $loop = 0;
         while ($createDataBaseFields = $this->ask("Do you want to create database fields?", 'yes') === 'yes') {
-            $databaseFields[] = $this->fieldsQuestion($prefix);
+            $databaseFields[] = $this->fieldsQuestion($prefix, $loop);
+            $loop++;
         }
 
         // if ($createDataBaseFields !== 'no' && $createDataBaseFields !== 'yes') {
@@ -85,7 +88,7 @@ class KjosMakeRouteApiCommand extends GeneratorCommand
         generateRequests($prefix, $databaseFields);
     }
 
-    protected function fieldsQuestion($prefix): ?array
+    protected function fieldsQuestion($prefix, $loop = null): ?array
     {
         $fieldTypes = [
             'bigIncrements', 'bigInteger', 'binary', 'boolean', 'char', 'date', 'dateTime',
@@ -128,19 +131,19 @@ class KjosMakeRouteApiCommand extends GeneratorCommand
 
         // ask for field nullable
         do {
-            $input = $this->ask("Field is nullable?");
+            $input = $this->ask("Field is nullable?", 'yes');
         } while ($input !== "yes" && $input !== "no");
         $fields["nullable"] = $input;
 
         // ask for field unique
         do {
-            $input = $this->ask("Field is unique?");
+            $input = $this->ask("Field is unique?", 'no');
         } while ($input !== "yes" && $input !== "no");
         $fields["unique"] = $input;
 
         // ask for field indexed
         do {
-            $input = $this->ask("Field is can be indexed?");
+            $input = $this->ask("Field is can be indexed?", 'no');
         } while ($input !== "yes" && $input !== "no");
         $fields["indexed"] = $input === "yes" ? true : false;
 
@@ -152,15 +155,25 @@ class KjosMakeRouteApiCommand extends GeneratorCommand
         }
 
         // ask if timestamps should be added (created_at and updated_at)        
-        if (!checkIfTimestampsExists($prefix)) {
+        if ($loop === 0) {
+            $this->runtimeDatas['timestamps_exists'] = false;
             if ($this->ask("Should the table have timestamps (created_at and updated_at)?", 'yes') === 'yes') {
                 $fields["timestamps"] = true;
+                $this->runtimeDatas['timestamps_exists'] = true;
+            }
+        } else {
+            if (!$this->runtimeDatas['timestamps_exists']) {
+
+                if ($this->ask("Should the table have timestamps (created_at and updated_at)?", 'yes') === 'yes') {
+                    $fields["timestamps"] = true;
+                    $this->runtimeDatas['timestamps_exists'] = true;
+                }
             }
         }
 
         // ask if the field should have a comment
         if ($this->ask("Would you like to add a comment to the field?", 'no') === 'yes') {
-            $comment = $this->ask("Enter the field comment:");
+            $comment = $this->ask("Enter the field comment");
             $fields["comment"] = $comment;
         }
 
