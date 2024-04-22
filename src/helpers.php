@@ -151,11 +151,6 @@ if (!function_exists('generateControllers')) {
       $putNewControllers = <<<CONTROLLERS
    
         <?php
-         \tnamespace {$rootNamespace}{$controllersDirectoryNamespace};
-         \tuse Illuminate\Routing\Controller as BaseController;
-         \tuse Illuminate\Http\Response;
-         \tuse Illuminate\Http\Request;
-         \tuse Illuminate\Http\Resources\Json\AnonymousResourceCollection;
          
         \tclass {$prefix}Controller extends BaseController
         \t{
@@ -181,6 +176,11 @@ if (!function_exists('generateControllers')) {
       appendUseStatement($controllerPath,  $request);
       appendUseStatement($controllerPath,  $resource);
       appendUseStatement($controllerPath,  $model);
+      appendUseStatement($controllerPath,  "Illuminate\Routing\Controller as BaseController");
+      appendUseStatement($controllerPath,  "Illuminate\Http\Response");
+      appendUseStatement($controllerPath,  "Illuminate\Http\Request");
+      appendUseStatement($controllerPath,  "Illuminate\Http\Resources\Json\AnonymousResourceCollection");
+      appendUseStatement($controllerPath,  "namespace {$rootNamespace}{$controllersDirectoryNamespace}", false);
    }
 }
 
@@ -211,7 +211,7 @@ if (!function_exists('findBasesDirectory')) {
 }
 
 if (!function_exists('appendUseStatement')) {
-   function appendUseStatement($filePath, $newUseStatement)
+   function appendUseStatement($filePath, $newUseStatement, $prefixUse = true)
    {
       // Read the current contents of the file
       $fileContents = file_get_contents($filePath);
@@ -222,7 +222,8 @@ if (!function_exists('appendUseStatement')) {
       }
 
       // Append the new use statement after the opening PHP tag
-      $newFileContents = preg_replace('/^<\?php\s*/', "<?php\nuse $newUseStatement;", $fileContents, 1);
+      if($prefixUse) $newFileContents = preg_replace('/^<\?php\s*/', "<?php\nuse $newUseStatement;\n", $fileContents, 1);
+      else $newFileContents = preg_replace('/^<\?php\s*/', "<?php\n $newUseStatement;\n", $fileContents, 1);
 
       // Save the new contents back to the file
       file_put_contents($filePath, $newFileContents);
