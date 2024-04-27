@@ -1,4 +1,4 @@
-# v0.0.1 : 21/04/2024
+# v1.0.1 : 21/04/2024
 
 ### Bug fixed
 
@@ -13,3 +13,9 @@
 remove one **“:”** from  _Enter the field comment::_
 
 the new route code remove the content of **api.php**
+
+
+# v1.0.2 : 27/04/2024
+
+### Bug fixed
+Resolve model file namespace order

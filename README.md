@@ -1,4 +1,4 @@
-# 3kjos-command
+# 3kjos-command for Laravel
 
 # INSTALLATION
 

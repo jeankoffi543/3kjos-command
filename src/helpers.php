@@ -18,10 +18,10 @@ if (!function_exists('generateApi')) {
       // Load the current contents of api.php
       $apiRoutesContents = app()->files->get($apiRoutePath);
       if (!$apiRoutePath) {
-         app()->abort(400, "api.php doesn't exist");         
+         app()->abort(400, "api.php doesn't exist");
          return true;
       }
-      
+
       $rootNamespace = getRootNamespace();
       $nameSpaceRootDirectory = getDirectoryFromNamespace($rootNamespace);
       $controllersDirectory = findBasesDirectory($nameSpaceRootDirectory, 'Controllers');
@@ -31,7 +31,7 @@ if (!function_exists('generateApi')) {
 
       // Check if prefix already exists in api.php
       if (Str::contains($apiRoutesContents, "'prefix' => '{$prefixLower}'")) {
-         app()->abort(400, "The prefix '{$prefix}' already exists in api.php");         
+         app()->abort(400, "The prefix '{$prefix}' already exists in api.php");
          return true;
       }
       $controllerClass = $rootNamespace .  $controllersDirectoryNamespace . "\\" . Str::studly($prefix) . "Controller";
@@ -63,7 +63,6 @@ if (!function_exists('generateApi')) {
          appendUseStatement($apiRoutePath, "Illuminate\Support\Facades\Route");
       }
       app()->files->append($apiRoutePath, $newRoutes);
-
    }
 }
 
@@ -222,7 +221,7 @@ if (!function_exists('appendUseStatement')) {
       }
 
       // Append the new use statement after the opening PHP tag
-      if($prefixUse) $newFileContents = preg_replace('/^<\?php\s*/', "<?php\nuse $newUseStatement;\n", $fileContents, 1);
+      if ($prefixUse) $newFileContents = preg_replace('/^<\?php\s*/', "<?php\nuse $newUseStatement;\n", $fileContents, 1);
       else $newFileContents = preg_replace('/^<\?php\s*/', "<?php\n $newUseStatement;\n", $fileContents, 1);
 
       // Save the new contents back to the file
@@ -437,12 +436,14 @@ if (!function_exists('generateModels')) {
       }
       $model = $rootNamespace .  $modelsDirectoryNamespace . "\\" . Str::studly($prefix);
       $prefixLower = Str::lower($prefix);
+
+      // Put prefix in carmel case
       $prefix = Str::studly($prefix);
 
+      // Gnerate modele file content
       $putNewModel = <<<CONTROLLERS
    
         <?php
-         \tnamespace {$rootNamespace}{$modelsDirectoryNamespace};
          \tuse Illuminate\Database\Eloquent\Model;
          
         \tclass {$prefix} extends Model
@@ -455,11 +456,16 @@ if (!function_exists('generateModels')) {
          
         CONTROLLERS;
 
+      // Add content to model file
       app()->files->put($modelPath, ltrim($putNewModel));
 
+      // Add related model namespaces
       foreach ($modelData['model_namespace'] as $model) {
          appendUseStatement($model['directory'], $model['model']);
       }
+      
+      // Add namespace allway at the end
+      appendUseStatement($modelPath, "namespace {$rootNamespace}{$modelsDirectoryNamespace}", false);
    }
 }
 
