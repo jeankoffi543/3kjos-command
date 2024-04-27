@@ -15,7 +15,7 @@ class TestCase extends Orchestra
     protected function tearDown(): void
     {
         parent::tearDown();
-        // removeTestDirectory();
+        removeTestDirectory();
     } 
 
     protected function getPackageProviders($app)
