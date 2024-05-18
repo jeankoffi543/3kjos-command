@@ -2,3 +2,7 @@
 .git
 /vendor
 /build
+.env
+composer.lock
+/node_modules
+/build
