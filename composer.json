@@ -10,8 +10,8 @@
   ],
   "repositories": [
     {
-      "type": "path",
-      "url": "/home/hillflame/www/www/.freelance/kjos-command",
+      "type": "vcs",
+      "url": "https://github.com/jeankoffi543/3kjos-command.git",
       "options": {
         "symlink": true
       }
