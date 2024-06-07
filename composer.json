@@ -1,5 +1,5 @@
 {
-  "version" : "1.0.2",
+  "version" : "1.0.3",
   "name": "kjos/command",
   "description": "Command tool for Laravel and other",
   "authors": [
