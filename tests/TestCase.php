@@ -1,6 +1,6 @@
 <?php
 
-namespace kjos\Command\Tests;
+namespace Kjos\Command\Tests;
 
 use Orchestra\Testbench\TestCase as Orchestra;
 
