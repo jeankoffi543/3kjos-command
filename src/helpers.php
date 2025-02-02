@@ -4,6 +4,11 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Str;
 
 if (!function_exists('getRootNamespace')) {
+   /**
+    * Gets the root namespace of the application.
+    *
+    * @return string
+    */
    function getRootNamespace()
    {
       // Get the RouteServiceProvider instance from the container
@@ -12,16 +17,13 @@ if (!function_exists('getRootNamespace')) {
 }
 
 if (!function_exists('generateApi')) {
-   function generateApi($prefix, $force, $apiRoutePath)
+   function generateApi($prefix, $force, $apiRoutePath, $errorHandler = null)
    {
-
       // Load the current contents of api.php
-      $apiRoutesContents = app()->files->get($apiRoutePath);
-      if (!$apiRoutePath) {
-         app()->abort(400, "api.php doesn't exist");
-         return true;
+      if (!file_exists($apiRoutePath)) {
+         file_put_contents($apiRoutePath, "<?php\n\n");
       }
-
+      $apiRoutesContents = app()->files->get($apiRoutePath);
       $rootNamespace = getRootNamespace();
       $nameSpaceRootDirectory = getDirectoryFromNamespace($rootNamespace);
       $controllersDirectory = findBasesDirectory($nameSpaceRootDirectory, 'Controllers');
@@ -67,6 +69,17 @@ if (!function_exists('generateApi')) {
 }
 
 if (!function_exists('getDirectoryFromNamespace')) {
+   /**
+    * Returns the directory path for a given namespace.
+    *
+    * This function takes a namespace and converts it to a directory path
+    * using the composer.json psr-4 autoloading map. If no matching directory
+    * is found, it returns null.
+    *
+    * @param string $namespace The namespace to convert to a directory path.
+    *
+    * @return string|null The directory path for the given namespace, or null if not found.
+    */
    function getDirectoryFromNamespace($namespace)
    {
       // Ensure namespace is correctly formatted with trailing backslashes
@@ -100,7 +113,7 @@ if (!function_exists('getDirectoryFromNamespace')) {
 }
 
 if (!function_exists('generateControllers')) {
-   function generateControllers($prefix, $force, $apiRoutePath)
+   function generateControllers($prefix, $force, $apiRoutePath, $errorHandler = null)
    {
       $rootNamespace = getRootNamespace();
       $nameSpaceRootDirectory = getDirectoryFromNamespace($rootNamespace);
@@ -109,13 +122,17 @@ if (!function_exists('generateControllers')) {
       $controllersDirectoryNamespace = str_replace('/', '\\', $controllersDirectory);
       $controllerPath = $nameSpaceRootDirectory  . $controllersDirectory . '/' . Str::studly($prefix) . 'Controller.php';
 
+      if ($errorHandler) {
+         generateErrorHandlerTraits();
+      }
+      
       file_put_contents($controllerPath, "<?php\n\n // Controller for $prefix\n");
 
-      $makeIndex = makeIndex($prefix);
-      $makeShow = makeShow($prefix);
-      $makeStore = makeStore($prefix);
-      $makeUpdate = makeUpdate($prefix);
-      $makeDestroy = makeDestroy($prefix);
+      $makeIndex = makeIndex($prefix, $errorHandler);
+      $makeShow = makeShow($prefix, $errorHandler);
+      $makeStore = makeStore($prefix, $errorHandler);
+      $makeUpdate = makeUpdate($prefix, $errorHandler);
+      $makeDestroy = makeDestroy($prefix, $errorHandler);
 
       // Namesapces
       // Requests 
@@ -146,12 +163,12 @@ if (!function_exists('generateControllers')) {
       }
       $modelsDirectoryNamespace = str_replace('/', '\\', $modelsDirectory);
       $model = $rootNamespace .  $modelsDirectoryNamespace . "\\" . Str::studly($prefix);
+      $prefix = Str::studly($prefix);
 
       $putNewControllers = <<<CONTROLLERS
-   
         <?php
          
-        \tclass {$prefix}Controller extends BaseController
+        \tclass {$prefix}Controller extends Controller
         \t{
             \t//index
             {$makeIndex}
@@ -175,7 +192,7 @@ if (!function_exists('generateControllers')) {
       appendUseStatement($controllerPath,  $request);
       appendUseStatement($controllerPath,  $resource);
       appendUseStatement($controllerPath,  $model);
-      appendUseStatement($controllerPath,  "Illuminate\Routing\Controller as BaseController");
+      $errorHandler ?: appendUseStatement($controllerPath,  "Illuminate\Routing\Controller");
       appendUseStatement($controllerPath,  "Illuminate\Http\Response");
       appendUseStatement($controllerPath,  "Illuminate\Http\Request");
       appendUseStatement($controllerPath,  "Illuminate\Http\Resources\Json\AnonymousResourceCollection");
@@ -184,6 +201,13 @@ if (!function_exists('generateControllers')) {
 }
 
 if (!function_exists('findBasesDirectory')) {
+   /**
+    * Finds the path to a directory with a given name, relative to a start directory.
+    *
+    * @param string $startDirectory The directory to start searching from
+    * @param string $name The name of the directory to search for
+    * @return string|null The relative path to the directory, or null if it is not found
+    */
    function findBasesDirectory($startDirectory, $name = null)
    {
       // Create a Recursive Directory Iterator
@@ -264,7 +288,7 @@ if (!function_exists('appendUseTrait')) {
 }
 
 if (!function_exists('makeIndex')) {
-   function makeIndex($prefix)
+   function makeIndex($prefix, $errorHandler)
    {
 
       $prefixStr = Str::studly($prefix);
@@ -275,7 +299,28 @@ if (!function_exists('makeIndex')) {
       $resourceName = $prefixStr . 'Resource';
 
 
-      $index = <<<INDEX
+      $index = $errorHandler ?  <<<INDEX
+      public function index(Request \$request): AnonymousResourceCollection
+       {
+          return \$this->errorHandler(function () use (\$request) {
+             \$limit = \$request->query('limit', 11);
+  
+             \${$prefix}Query = {$modelName}::query();
+              
+             /**
+             * Paginate the results
+             *
+             * @var \Illuminate\Database\Eloquent\Collection \${$prefix}
+             */
+             \${$prefix} = \${$prefix}Query->paginate(\$limit);
+  
+             return {$resourceName}::collection(\${$prefix});   
+          });
+          
+       }
+      INDEX
+         :
+         <<<INDEX
         \tpublic function index(Request \$request): AnonymousResourceCollection
         \t\t{
             \t\t\$limit = \$request->query('limit', 11);
@@ -298,7 +343,7 @@ if (!function_exists('makeIndex')) {
 }
 
 if (!function_exists('makeUpdate')) {
-   function makeUpdate($prefix)
+   function makeUpdate($prefix, $errorHandler)
    {
 
       $prefixStr = Str::studly($prefix);
@@ -308,7 +353,18 @@ if (!function_exists('makeUpdate')) {
       $modelName = $prefixStr;
       $resourceName = $prefixStr . 'Resource';
 
-      $update = <<<UPDATE
+      $update = $errorHandler ?  <<<UPDATE
+      public function update({$requestName} \$request, \$id): Response|{$resourceName}
+       {
+             return \$this->errorHandler(function () use (\$request, \$id) {
+                \${$prefix} = {$modelName}::findOrFail(\$id);
+                \${$prefix}->update(\$request->validated());
+                return new {$resourceName}(\${$prefix});
+             });
+       }
+      UPDATE
+         :
+         <<<UPDATE
         \tpublic function update({$requestName} \$request, \$id): Response|{$resourceName}
         \t\t{
          \t\t\ttry{
@@ -330,7 +386,7 @@ if (!function_exists('makeUpdate')) {
 }
 
 if (!function_exists('makeStore')) {
-   function makeStore($prefix)
+   function makeStore($prefix, $errorHandler)
    {
 
       $prefixStr = Str::studly($prefix);
@@ -340,7 +396,16 @@ if (!function_exists('makeStore')) {
       $modelName = $prefixStr;
       $resourceName = $prefixStr . 'Resource';
 
-      $store = <<<STORE
+      $store = $errorHandler ?  <<<STORE
+      public function store({$requestName} \$request): Response|{$resourceName}
+      {
+         return \$this->errorHandler(function () use (\$request) {
+            return new {$resourceName}({$modelName}::create(\$request->validated()));      
+         });
+      }
+      STORE
+         :
+         <<<STORE
         \tpublic function store({$requestName} \$request): Response|{$resourceName}
         \t\t{
          \t\t\ttry{
@@ -356,7 +421,7 @@ if (!function_exists('makeStore')) {
 }
 
 if (!function_exists('makeShow')) {
-   function makeShow($prefix)
+   function makeShow($prefix, $errorHandler)
    {
 
       $prefixStr = Str::studly($prefix);
@@ -366,7 +431,17 @@ if (!function_exists('makeShow')) {
       $modelName = $prefixStr;
       $resourceName = $prefixStr . 'Resource';
 
-      $show = <<<SHOW
+      $show = $errorHandler ?  <<<SHOW
+      public function show(\$id): Response|{$resourceName}
+      {
+         return \$this->errorHandler(function () use (\$id) {
+            \${$prefix} = {$modelName}::findOrFail(\$id);
+            return new {$resourceName}(\${$prefix});   
+         });
+      }
+      SHOW
+         :
+         <<<SHOW
         \tpublic function show(\$id): Response|{$resourceName}
         \t\t{
          \t\t\ttry{
@@ -386,7 +461,7 @@ if (!function_exists('makeShow')) {
 }
 
 if (!function_exists('makeDestroy')) {
-   function makeDestroy($prefix)
+   function makeDestroy($prefix, $errorHandler)
    {
 
       $prefixStr = Str::studly($prefix);
@@ -396,7 +471,17 @@ if (!function_exists('makeDestroy')) {
       $modelName = $prefixStr;
       $resourceName = $prefixStr . 'Resource';
 
-      $destroy = <<<DESTROY
+      $destroy = $errorHandler ? <<<DESTROY
+        public function destroy(\$id): Response|{$resourceName}
+        {
+            return \$this->errorHandler(function () use (\$id) {
+               \${$prefix} = {$modelName}::findOrFail(\$id);
+               \${$prefix}->delete();
+            });
+        }
+        DESTROY
+         :
+         <<<DESTROY
         \tpublic function destroy(\$id): Response|{$resourceName}
         \t\t{
          \t\t\ttry{
@@ -463,7 +548,7 @@ if (!function_exists('generateModels')) {
       foreach ($modelData['model_namespace'] as $model) {
          appendUseStatement($model['directory'], $model['model']);
       }
-      
+
       // Add namespace allway at the end
       appendUseStatement($modelPath, "namespace {$rootNamespace}{$modelsDirectoryNamespace}", false);
    }
@@ -497,6 +582,8 @@ if (!function_exists('generateResources')) {
       $resourcesDirectoryNamespace = str_replace('/', '\\', $resourcesDirectory);
       $resource = $rootNamespace .  $resourcesDirectoryNamespace . "\\" . Str::studly($prefix) . "Resource";
 
+      // Put prefix in carmel case
+      $prefix = Str::studly($prefix);
 
       $putNewModel = <<<CONTROLLERS
    
@@ -558,6 +645,8 @@ if (!function_exists('generateRequests')) {
       $requestsDirectoryNamespace = str_replace('/', '\\', $requestsDirectory);
       $request = $rootNamespace .  $requestsDirectoryNamespace . "\\" . Str::studly($prefix) . "Request";
 
+      // Put prefix in carmel case
+      $prefix = Str::studly($prefix);
 
       $putNewModel = <<<CONTROLLERS
    
@@ -781,5 +870,73 @@ if (!function_exists('generateMigrations')) {
             }
          }
       }
+   }
+}
+
+if (!function_exists('generateErrorHandlerTraits')) {
+   function generateErrorHandlerTraits()
+   {
+      $rootNamespace = getRootNamespace();
+      $nameSpaceRootDirectory = getDirectoryFromNamespace($rootNamespace);
+      $controllersDirectory = findBasesDirectory($nameSpaceRootDirectory, 'Controllers');
+
+      $controllersDirectoryNamespace = str_replace('/', '\\', $controllersDirectory);
+      $controllerTraiterPath = $nameSpaceRootDirectory  . $controllersDirectory . '/Handler.php';
+      $controllerPath = $nameSpaceRootDirectory  . $controllersDirectory . '/Controller.php';
+
+      $handlerTrait = <<<HANDLER
+      <?php
+        trait Handler
+        {
+         protected function errorHandler(\\Closure \$callable)
+         {
+          try {
+            return \$callable();
+            } catch (ModelNotFoundException \$e) {
+               return response('not_found', Response::HTTP_NOT_FOUND);
+             } catch (\Exception \$e) {
+            if (\$e->getCode() === 404) {
+                return response('not_found', Response::HTTP_NOT_FOUND);
+            }
+            if (\$e->getCode() === 403) {
+                return response(\$e->getMessage(), Response::HTTP_FORBIDDEN);
+            }
+            if (\$e->getCode() === 422) {
+                return response(\$e->getMessage(), Response::HTTP_FORBIDDEN);
+            }
+            return response(\$e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
+            }
+         }
+        }
+      HANDLER;
+
+      $controller = <<<CONTROLLER
+      <?php
+         class Controller extends BaseController
+         {
+            use AuthorizesRequests, Handler, ValidatesRequests;
+         }
+      CONTROLLER;
+
+      // Traits
+      app()->files->put($controllerTraiterPath, ltrim($handlerTrait));
+      appendUseStatement($controllerTraiterPath,  "Illuminate\Database\Eloquent\ModelNotFoundException");
+      appendUseStatement($controllerTraiterPath,  "Illuminate\Http\Response");
+      appendUseStatement($controllerTraiterPath,  "namespace {$rootNamespace}{$controllersDirectoryNamespace}", false);
+
+      // Controller
+      app()->files->put($controllerPath, ltrim($controller));
+      appendUseStatement($controllerPath,  "Illuminate\Foundation\Auth\Access\AuthorizesRequests");
+      appendUseStatement($controllerPath,  "Illuminate\Foundation\Validation\ValidatesRequests");
+      appendUseStatement($controllerPath,  "Illuminate\Routing\Controller as BaseController");
+      appendUseStatement($controllerPath,  "namespace {$rootNamespace}{$controllersDirectoryNamespace}", false);
+   }
+}
+
+if (!function_exists('getAppDirectory')) {
+   function getAppDirectory()
+   {
+      $rootNamespace = getRootNamespace();
+      return getDirectoryFromNamespace($rootNamespace);
    }
 }
