@@ -125,6 +125,7 @@ if (!function_exists('generateControllers')) {
       if ($errorHandler) {
          generateErrorHandlerTraits();
       }
+
       file_put_contents($controllerPath, "<?php\n\n // Controller for $prefix\n");
 
       $makeIndex = makeIndex($prefix, $errorHandler);
