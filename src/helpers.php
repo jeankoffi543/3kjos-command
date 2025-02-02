@@ -125,7 +125,7 @@ if (!function_exists('generateControllers')) {
       if ($errorHandler) {
          generateErrorHandlerTraits();
       }
-      
+
       file_put_contents($controllerPath, "<?php\n\n // Controller for $prefix\n");
 
       $makeIndex = makeIndex($prefix, $errorHandler);
@@ -938,5 +938,13 @@ if (!function_exists('getAppDirectory')) {
    {
       $rootNamespace = getRootNamespace();
       return getDirectoryFromNamespace($rootNamespace);
+   }
+}
+
+if (!function_exists('format')) {
+   function format($path)
+   {
+      $command = escapeshellcmd("./vendor/bin/pint " . escapeshellarg($path));
+      exec($command, $output, $returnCode);
    }
 }

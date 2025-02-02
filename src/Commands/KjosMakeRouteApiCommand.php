@@ -50,6 +50,11 @@ class KjosMakeRouteApiCommand extends GeneratorCommand
 
         $this->info("API routes for {$prefix} prefix have been added.");
 
+        // Format code
+        format($apiRoutePath);
+        format(getAppDirectory());
+
+
         return false;
     }
 
