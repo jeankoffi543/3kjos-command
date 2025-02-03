@@ -113,7 +113,7 @@ if (!function_exists('getDirectoryFromNamespace')) {
 }
 
 if (!function_exists('generateControllers')) {
-   function generateControllers($prefix, $force, $apiRoutePath, $errorHandler = null)
+   function generateControllers($prefix, $force, $apiRoutePath, $errorHandler = null, $centralize = null)
    {
       $rootNamespace = getRootNamespace();
       $nameSpaceRootDirectory = getDirectoryFromNamespace($rootNamespace);
@@ -121,18 +121,22 @@ if (!function_exists('generateControllers')) {
 
       $controllersDirectoryNamespace = str_replace('/', '\\', $controllersDirectory);
       $controllerPath = $nameSpaceRootDirectory  . $controllersDirectory . '/' . Str::studly($prefix) . 'Controller.php';
-
+      dump($controllerPath);
       if ($errorHandler) {
          generateErrorHandlerTraits();
       }
 
+      if ($centralize) {
+         generateCentralizeController();
+      }
+
       file_put_contents($controllerPath, "<?php\n\n // Controller for $prefix\n");
 
-      $makeIndex = makeIndex($prefix, $errorHandler);
-      $makeShow = makeShow($prefix, $errorHandler);
-      $makeStore = makeStore($prefix, $errorHandler);
-      $makeUpdate = makeUpdate($prefix, $errorHandler);
-      $makeDestroy = makeDestroy($prefix, $errorHandler);
+      $makeIndex = makeIndex($prefix, $errorHandler, $centralize);
+      $makeShow = makeShow($prefix, $errorHandler, $centralize);
+      $makeStore = makeStore($prefix, $errorHandler, $centralize);
+      $makeUpdate = makeUpdate($prefix, $errorHandler, $centralize);
+      $makeDestroy = makeDestroy($prefix, $errorHandler, $centralize);
 
       // Namesapces
       // Requests 
@@ -168,23 +172,23 @@ if (!function_exists('generateControllers')) {
       $putNewControllers = <<<CONTROLLERS
         <?php
          
-        \tclass {$prefix}Controller extends Controller
-        \t{
-            \t//index
+        class {$prefix}Controller extends Controller
+        {
+            //index
             {$makeIndex}
 
-            \t//show
+            //show
             {$makeShow}
 
-            \t//store
+            //store
             {$makeStore}
 
-            \t// update
+            // update
             {$makeUpdate}
 
-            \t//destroy
+            //destroy
             {$makeDestroy}
-         \t}
+         }
          
         CONTROLLERS;
 
@@ -276,7 +280,7 @@ if (!function_exists('appendUseTrait')) {
          $className = $matches[1];
 
          // Replacement string with new use statement
-         $replacement = "$classDeclaration\n\tuse $newUseTrait\n\n;";
+         $replacement = "$classDeclaration\nuse $newUseTrait\n\n;";
 
          // Replace the content by adding the new use statement after the class declaration
          $newFileContents = str_replace($classDeclaration, $replacement, $fileContents);
@@ -288,24 +292,34 @@ if (!function_exists('appendUseTrait')) {
 }
 
 if (!function_exists('makeIndex')) {
-   function makeIndex($prefix, $errorHandler)
+   function makeIndex($prefix, $errorHandler, $centralize)
    {
 
       $prefixStr = Str::studly($prefix);
       $prefix = Str::lower($prefix);
 
-      $requestName = $prefixStr . 'Request';
       $modelName = $prefixStr;
       $resourceName = $prefixStr . 'Resource';
 
+      $centralizeWithErrorHandler = $centralize ?
 
-      $index = $errorHandler ?  <<<INDEX
-      public function index(Request \$request): AnonymousResourceCollection
-       {
-          return \$this->errorHandler(function () use (\$request) {
-             \$limit = \$request->query('limit', 11);
+         <<<INDEX1
+            public function index(Request \$request): AnonymousResourceCollection
+            {
+               return \$this->errorHandler(function () use (\$request) {
+                  return Central::index({$modelName}::class, {$resourceName}::class);
+               });
+          
+            }
+      INDEX1
+         :
+         <<<INDEX1
+            public function index(Request \$request): AnonymousResourceCollection
+            {
+               return \$this->errorHandler(function () use (\$request) {
+               \$limit = \$request->query('limit', 11);
   
-             \${$prefix}Query = {$modelName}::query();
+               \${$prefix}Query = {$modelName}::query();
               
              /**
              * Paginate the results
@@ -318,32 +332,40 @@ if (!function_exists('makeIndex')) {
           });
           
        }
-      INDEX
-         :
-         <<<INDEX
-        \tpublic function index(Request \$request): AnonymousResourceCollection
-        \t\t{
-            \t\t\$limit = \$request->query('limit', 11);
-    
-            \t\t\${$prefix}Query = {$modelName}::query();
-                
-            \t\t/**
-            \t\t* Paginate the results
-            \t\t*
-            \t\t* @var \Illuminate\Database\Eloquent\Collection \${$prefix}
-            \t\t*/
-            \t\t\t\${$prefix} = \${$prefix}Query->paginate(\$limit);
-    
-            \t\treturn {$resourceName}::collection(\${$prefix});
-            \t}
-        INDEX;
+      INDEX1;
 
-      return $index;
+      $centralizeWithoutErrorHandler =  $centralize ?
+         <<<INDEX2
+         public function index(Request \$request): AnonymousResourceCollection
+         {
+          return Central::index({$modelName}::class, {$resourceName}::class);
+         }
+      INDEX2
+         :
+         <<<INDEX2
+      public function index(Request \$request): AnonymousResourceCollection
+      {
+          \$limit = \$request->query('limit', 11);
+  
+          \${$prefix}Query = {$modelName}::query();
+              
+          /**
+          * Paginate the results
+          *
+          * @var \Illuminate\Database\Eloquent\Collection \${$prefix}
+          */
+          \${$prefix} = \${$prefix}Query->paginate(\$limit);
+  
+          return {$resourceName}::collection(\${$prefix});
+          }
+      INDEX2;
+
+      return $errorHandler ?  $centralizeWithErrorHandler : $centralizeWithoutErrorHandler;
    }
 }
 
 if (!function_exists('makeUpdate')) {
-   function makeUpdate($prefix, $errorHandler)
+   function makeUpdate($prefix, $errorHandler, $centralize)
    {
 
       $prefixStr = Str::studly($prefix);
@@ -353,7 +375,17 @@ if (!function_exists('makeUpdate')) {
       $modelName = $prefixStr;
       $resourceName = $prefixStr . 'Resource';
 
-      $update = $errorHandler ?  <<<UPDATE
+      $centralizeWithErrorHandler = $centralize ?
+         <<<UPDATE1
+      public function update({$requestName} \$request, \$id): Response|{$resourceName}
+       {
+             return \$this->errorHandler(function () use (\$request, \$id) {
+               return Central::update({$modelName}::class, {$resourceName}::class, \$id, \$request->validated());
+             });
+       }
+      UPDATE1
+         :
+         <<<UPDATE1
       public function update({$requestName} \$request, \$id): Response|{$resourceName}
        {
              return \$this->errorHandler(function () use (\$request, \$id) {
@@ -362,31 +394,43 @@ if (!function_exists('makeUpdate')) {
                 return new {$resourceName}(\${$prefix});
              });
        }
-      UPDATE
+      UPDATE1;
+
+
+      $centralizeWithoutErrorHandler = $centralize ?
+         <<<UPDATE2
+         public function update({$requestName} \$request, \$id): Response|{$resourceName}
+         {
+            try{
+                  return Central::update({$modelName}::class, {$resourceName}::class, \$id, \$request->validated());
+               }catch(\Exception \$e){
+                  return response('internal_server_error', Response::HTTP_INTERNAL_SERVER_ERROR);
+               }
+      UPDATE2
          :
-         <<<UPDATE
-        \tpublic function update({$requestName} \$request, \$id): Response|{$resourceName}
-        \t\t{
-         \t\t\ttry{
+         <<<UPDATE2
+       public function update({$requestName} \$request, \$id): Response|{$resourceName}
+        {
+         try{
 
-            \t\t\t\${$prefix} = {$modelName}::find(\$id);
-            \t\t\tif (!\${$prefix}) {
-               \t\t\t\treturn response('not_found', Response::HTTP_NOT_FOUND);
-            \t\t\t}
-            \t\t\t\${$prefix}->update(\$request->validated());
-            \t\t\treturn new {$resourceName}(\${$prefix});
-            \t\t}catch(\Exception \$e){
-               \t\t\treturn response('internal_server_error', Response::HTTP_INTERNAL_SERVER_ERROR);
-            \t\t}
-         \t\t}
-        UPDATE;
+            \${$prefix} = {$modelName}::find(\$id);
+            if (!\${$prefix}) {
+               return response('not_found', Response::HTTP_NOT_FOUND);
+            }
+            \${$prefix}->update(\$request->validated());
+            return new {$resourceName}(\${$prefix});
+            }catch(\Exception \$e){
+               return response('internal_server_error', Response::HTTP_INTERNAL_SERVER_ERROR);
+            }
+         }
+      UPDATE2;
 
-      return $update;
+      return $errorHandler ?  $centralizeWithErrorHandler : $centralizeWithoutErrorHandler;
    }
 }
 
 if (!function_exists('makeStore')) {
-   function makeStore($prefix, $errorHandler)
+   function makeStore($prefix, $errorHandler, $centralize)
    {
 
       $prefixStr = Str::studly($prefix);
@@ -396,32 +440,55 @@ if (!function_exists('makeStore')) {
       $modelName = $prefixStr;
       $resourceName = $prefixStr . 'Resource';
 
-      $store = $errorHandler ?  <<<STORE
+      $centralizeWithErrorHandler = $centralize ?
+         <<<STORE1
+      public function store({$requestName} \$request): Response|{$resourceName}
+      {
+         return \$this->errorHandler(function () use (\$request) {
+            return Central::store({$modelName}::class, {$resourceName}::class, \$request->validated());  
+         });
+      }   
+      STORE1
+         :
+         <<<STORE1
       public function store({$requestName} \$request): Response|{$resourceName}
       {
          return \$this->errorHandler(function () use (\$request) {
             return new {$resourceName}({$modelName}::create(\$request->validated()));      
          });
-      }
-      STORE
-         :
-         <<<STORE
-        \tpublic function store({$requestName} \$request): Response|{$resourceName}
-        \t\t{
-         \t\t\ttry{
-            \t\t\treturn new {$resourceName}({$modelName}::create(\$request->validated()));
-            \t\t}catch(\Exception \$e){
-               \t\t\treturn response('internal_server_error', Response::HTTP_INTERNAL_SERVER_ERROR);
-            \t\t}
-         \t\t}
-        STORE;
+      }   
+      STORE1;
 
-      return $store;
+
+      $centralizeWithoutErrorHandler = $centralize ?
+         <<<STORE2
+         public function store({$requestName} \$request): Response|{$resourceName}
+        {
+         try{
+            return Central::store({$modelName}::class, {$resourceName}::class, \$request->validated());
+            }catch(\Exception \$e){
+               return response('internal_server_error', Response::HTTP_INTERNAL_SERVER_ERROR);
+            }
+         }
+      STORE2
+         :
+         <<<STORE2
+         public function store({$requestName} \$request): Response|{$resourceName}
+         {
+            try{
+               return new {$resourceName}({$modelName}::create(\$request->validated()));
+            }catch(\Exception \$e){
+               return response('internal_server_error', Response::HTTP_INTERNAL_SERVER_ERROR);
+            }
+         }
+      STORE2;
+
+      return  $errorHandler ?  $centralizeWithErrorHandler : $centralizeWithoutErrorHandler;
    }
 }
 
 if (!function_exists('makeShow')) {
-   function makeShow($prefix, $errorHandler)
+   function makeShow($prefix, $errorHandler, $centralize)
    {
 
       $prefixStr = Str::studly($prefix);
@@ -431,7 +498,17 @@ if (!function_exists('makeShow')) {
       $modelName = $prefixStr;
       $resourceName = $prefixStr . 'Resource';
 
-      $show = $errorHandler ?  <<<SHOW
+      $centralizeWithErrorHandler = $centralize ?
+         <<<SHOW1
+      public function show(\$id): Response|{$resourceName}
+      {
+         return \$this->errorHandler(function () use (\$id) {
+            return Central::show({$modelName}::class, {$resourceName}::class, \$id);
+         });
+      }
+      SHOW1
+         :
+         <<<SHOW1
       public function show(\$id): Response|{$resourceName}
       {
          return \$this->errorHandler(function () use (\$id) {
@@ -439,29 +516,42 @@ if (!function_exists('makeShow')) {
             return new {$resourceName}(\${$prefix});   
          });
       }
-      SHOW
-         :
-         <<<SHOW
-        \tpublic function show(\$id): Response|{$resourceName}
-        \t\t{
-         \t\t\ttry{
-            \t\t\t\${$prefix} = {$modelName}::find(\$id);
-            \t\t\tif (!\${$prefix}) {
-               \t\t\t\treturn response('not_found', Response::HTTP_NOT_FOUND);
-            \t\t\t}
-            \t\t\treturn new {$resourceName}(\${$prefix});
-            \t\t}catch(\Exception \$e){
-               \t\t\treturn response('internal_server_error', Response::HTTP_INTERNAL_SERVER_ERROR);
-            \t\t}
-         \t\t}
-        SHOW;
+      SHOW1;
 
-      return $show;
+
+      $centralizeWithoutErrorHandler = $centralize ?
+         <<<SHOW2
+      public function show(\$id): Response|{$resourceName}
+        {
+         try{
+            return Central::show({$modelName}::class, {$resourceName}::class, \$id);
+            }catch(\Exception \$e){
+               return response('internal_server_error', Response::HTTP_INTERNAL_SERVER_ERROR);
+            }
+         }
+      SHOW2
+         :
+         <<<SHOW2
+      public function show(\$id): Response|{$resourceName}
+        {
+         try{
+            \${$prefix} = {$modelName}::find(\$id);
+            if (!\${$prefix}) {
+               return response('not_found', Response::HTTP_NOT_FOUND);
+            }
+            return new {$resourceName}(\${$prefix});
+            }catch(\Exception \$e){
+               return response('internal_server_error', Response::HTTP_INTERNAL_SERVER_ERROR);
+            }
+         }  
+      SHOW2;
+
+      return  $errorHandler ?  $centralizeWithErrorHandler : $centralizeWithoutErrorHandler;
    }
 }
 
 if (!function_exists('makeDestroy')) {
-   function makeDestroy($prefix, $errorHandler)
+   function makeDestroy($prefix, $errorHandler, $centralize)
    {
 
       $prefixStr = Str::studly($prefix);
@@ -471,32 +561,55 @@ if (!function_exists('makeDestroy')) {
       $modelName = $prefixStr;
       $resourceName = $prefixStr . 'Resource';
 
-      $destroy = $errorHandler ? <<<DESTROY
-        public function destroy(\$id): Response|{$resourceName}
+      $centralizeWithErrorHandler = $centralize ?
+         <<<DESTROY1
+      public function destroy(\$id): Response|{$resourceName}
+        {
+            return \$this->errorHandler(function () use (\$id) {
+               return Central::destroy({$modelName}::class, {$resourceName}::class, \$id);
+            });
+        }
+      DESTROY1
+         :
+         <<<DESTROY1
+      public function destroy(\$id): Response|{$resourceName}
         {
             return \$this->errorHandler(function () use (\$id) {
                \${$prefix} = {$modelName}::findOrFail(\$id);
                \${$prefix}->delete();
             });
         }
-        DESTROY
-         :
-         <<<DESTROY
-        \tpublic function destroy(\$id): Response|{$resourceName}
-        \t\t{
-         \t\t\ttry{
-            \t\t\t\${$prefix} = {$modelName}::find(\$id);
-            \t\t\tif (!\${$prefix}) {
-               \t\t\t\treturn response('not_found', Response::HTTP_NOT_FOUND);
-            \t\t\t}
-            \t\t\t\${$prefix}->delete();
-            \t\t}catch(\Exception \$e){
-               \t\t\treturn response('internal_server_error', Response::HTTP_INTERNAL_SERVER_ERROR);
-            \t\t}
-         \t\t}
-        DESTROY;
+      DESTROY1;
 
-      return $destroy;
+
+      $centralizeWithoutErrorHandler = $centralize ?
+         <<<DESTROY2
+      public function destroy(\$id): Response|{$resourceName}
+        {
+         try{
+            return Central::destroy({$modelName}::class, {$resourceName}::class, \$id);
+            }catch(\Exception \$e){
+               return response('internal_server_error', Response::HTTP_INTERNAL_SERVER_ERROR);
+            }
+         }
+      DESTROY2
+         :
+         <<<DESTROY2
+      public function destroy(\$id): Response|{$resourceName}
+        {
+         try{
+            \${$prefix} = {$modelName}::find(\$id);
+            if (!\${$prefix}) {
+               return response('not_found', Response::HTTP_NOT_FOUND);
+            }
+            \${$prefix}->delete();
+            }catch(\Exception \$e){
+               return response('internal_server_error', Response::HTTP_INTERNAL_SERVER_ERROR);
+            }
+         }
+      DESTROY2;
+
+      return  $errorHandler ?  $centralizeWithErrorHandler : $centralizeWithoutErrorHandler;
    }
 }
 
@@ -529,15 +642,15 @@ if (!function_exists('generateModels')) {
       $putNewModel = <<<CONTROLLERS
    
         <?php
-         \tuse Illuminate\Database\Eloquent\Model;
+         use Illuminate\Database\Eloquent\Model;
          
-        \tclass {$prefix} extends Model
-        \t{
-            \tprotected \$table = '{$prefixLower}';
+        class {$prefix} extends Model
+        {
+            protected \$table = '{$prefixLower}';
             
-            \n\t{$modelData['model_code']}
+            \n{$modelData['model_code']}
 
-         \t}
+         }
          
         CONTROLLERS;
 
@@ -557,9 +670,9 @@ if (!function_exists('generateModels')) {
 if (!function_exists('generateResources')) {
    function generateResources($prefix, $databaseFields)
    {
-      $resourcesString = "\t\t\t\t'id' => \$this->resource->id,\n";
+      $resourcesString = "'id' => \$this->resource->id,\n";
       foreach ($databaseFields as $field) {
-         $resourcesString .= "\t\t\t\t\t\t\t'{$field['name']}' => \$this->resource->{$field['name']},\n";
+         $resourcesString .= "'{$field['name']}' => \$this->resource->{$field['name']},\n";
       }
       $rootNamespace = getRootNamespace();
       $nameSpaceRootDirectory = getDirectoryFromNamespace($rootNamespace);
@@ -588,22 +701,22 @@ if (!function_exists('generateResources')) {
       $putNewModel = <<<CONTROLLERS
    
         <?php
-         \tnamespace {$rootNamespace}{$resourcesDirectoryNamespace};
-         \tuse Illuminate\Http\Resources\Json\JsonResource;
+         namespace {$rootNamespace}{$resourcesDirectoryNamespace};
+         use Illuminate\Http\Resources\Json\JsonResource;
          
          
-        \tclass {$prefix}Resource extends JsonResource
-        \t{
-            \t\tpublic function toArray(\$request): array
-            \t\t{
-                 \t\t\treturn [
+        class {$prefix}Resource extends JsonResource
+        {
+            public function toArray(\$request): array
+            {
+                 return [
                   {$resourcesString}
-                 \t\t\t];
+                 ];
 
-           \t\t}
+           }
         
 
-         \t}
+         }
          
         CONTROLLERS;
 
@@ -621,7 +734,7 @@ if (!function_exists('generateRequests')) {
          $type = isset($field['type']) ? '|' . $field['type'] : '';
          $length = isset($field['length']) ? '|' . $field['length'] : '';
          $unique = isset($field['unique']) && $field['unique'] === "yes" ? '|' . 'unique:' . $prefixLower . ',' . $field['name']  : '';
-         $rulesString .= "\t\t\t\t\t\t\t'{$field['name']}' => '{$required}{$type}{$length}{$unique},',\n";
+         $rulesString .= "'{$field['name']}' => '{$required}{$type}{$length}{$unique},',\n";
       }
 
       $rootNamespace = getRootNamespace();
@@ -651,54 +764,50 @@ if (!function_exists('generateRequests')) {
       $putNewModel = <<<CONTROLLERS
    
         <?php
-         \tnamespace {$rootNamespace}{$requestsDirectoryNamespace};
-         \tuse Illuminate\Contracts\Validation\Validator;
-         \tuse Illuminate\Foundation\Http\FormRequest;
-         \tuse Illuminate\Http\Exceptions\HttpResponseException;
+         namespace {$rootNamespace}{$requestsDirectoryNamespace};
+         use Illuminate\Contracts\Validation\Validator;
+         use Illuminate\Foundation\Http\FormRequest;
+         use Illuminate\Http\Exceptions\HttpResponseException;
          
-        \tclass {$prefix}Request extends FormRequest
-        \t{
+        class {$prefix}Request extends FormRequest
+        {
 
-            \t\tpublic function authorize()
-            \t\t{
-                \t\t\treturn true;
-            \t\t}
+            public function authorize()
+            {
+                return true;
+            }
 
-            \t\t/**
-            \t\t* @return string[]
-            \t\t*/
-            \t\tpublic function rules(): array
-            \t\t{
-               \t\t\tif (\$this->isMethod(FormRequest::METHOD_GET)) {
-                  \t\t\t\treturn [
-                  
-                     \t\t\t\t];
+            /**
+            * @return string[]
+            */
+            public function rules(): array
+            {
+               if (\$this->isMethod(FormRequest::METHOD_GET)) {
+                  return [];
                   }
 
-                  \t\t\t\t\$rules = [
+                  \$rules = [
                      {$rulesString}
-                  \t\t\t\t];
+                  ];
 
-                  \t\t\tif (\$this->isMethod(FormRequest::METHOD_PUT)) {
-                     \t\t\t\t\$rules = array_merge(\$rules, [
-                           
-                           \t\t\t\t]);
-                  \t\t\t}
+                  if (\$this->isMethod(FormRequest::METHOD_PUT)) {
+                     \$rules = array_merge(\$rules, []);
+                  }
 
                   return \$rules;
                }
 
-               \t\t/**
-               \t\t* @return mixed
-               \t\t*/
-               \t\tpublic function failedValidation(Validator \$validator)
-               \t\t{
-                  \t\t\tthrow new HttpResponseException(
-                     \t\t\t\tresponse('bad_request', 400)
-                  \t\t\t);
-            \t\t}
+               /**
+               * @return mixed
+               */
+               public function failedValidation(Validator \$validator)
+               {
+                  throw new HttpResponseException(
+                     response('bad_request', 400)
+                  );
+            }
 
-         \t}
+         }
          
         CONTROLLERS;
 
@@ -745,32 +854,32 @@ if (!function_exists('generateMigrations')) {
       $putNewModel = <<<CONTROLLERS
    
         <?php
-         \tuse Illuminate\Database\Migrations\Migration;
-         \tuse Illuminate\Database\Schema\Blueprint;
-         \tuse Illuminate\Support\Facades\Schema;
+         use Illuminate\Database\Migrations\Migration;
+         use Illuminate\Database\Schema\Blueprint;
+         use Illuminate\Support\Facades\Schema;
          
-        \treturn new class extends Migration
-        \t{
+        return new class extends Migration
+        {
 
-            \t/**
-            \t* Run the migrations.
-            \t*/
+            /**
+            * Run the migrations.
+            */
 
-            \t\tpublic function up(): void
-            \t\t{
-               \t\t {$schema}
-            \t\t}
+            public function up(): void
+            {
+                {$schema}
+            }
 
-            \t/**
-            \t*Reverse the migrations.
-            \t*
-            \t* @return void
-            \t*/
-            \t\tpublic function down()
-            \t\t{
-               \t\t\tSchema::dropIfExists('{$prefixLower}');
-            \t\t}
-         \t};
+            /**
+            *Reverse the migrations.
+            *
+            * @return void
+            */
+            public function down()
+            {
+               Schema::dropIfExists('{$prefixLower}');
+            }
+         };
          
         CONTROLLERS;
 
@@ -919,17 +1028,21 @@ if (!function_exists('generateErrorHandlerTraits')) {
       CONTROLLER;
 
       // Traits
-      app()->files->put($controllerTraiterPath, ltrim($handlerTrait));
-      appendUseStatement($controllerTraiterPath,  "Illuminate\Database\Eloquent\ModelNotFoundException");
-      appendUseStatement($controllerTraiterPath,  "Illuminate\Http\Response");
-      appendUseStatement($controllerTraiterPath,  "namespace {$rootNamespace}{$controllersDirectoryNamespace}", false);
+      if (!file_exists($controllerTraiterPath)) {
+         app()->files->put($controllerTraiterPath, ltrim($handlerTrait));
+         appendUseStatement($controllerTraiterPath,  "Illuminate\Database\Eloquent\ModelNotFoundException");
+         appendUseStatement($controllerTraiterPath,  "Illuminate\Http\Response");
+         appendUseStatement($controllerTraiterPath,  "namespace {$rootNamespace}{$controllersDirectoryNamespace}", false);
+      }
 
       // Controller
-      app()->files->put($controllerPath, ltrim($controller));
-      appendUseStatement($controllerPath,  "Illuminate\Foundation\Auth\Access\AuthorizesRequests");
-      appendUseStatement($controllerPath,  "Illuminate\Foundation\Validation\ValidatesRequests");
-      appendUseStatement($controllerPath,  "Illuminate\Routing\Controller as BaseController");
-      appendUseStatement($controllerPath,  "namespace {$rootNamespace}{$controllersDirectoryNamespace}", false);
+      if (!file_exists($controllerPath)) {
+         app()->files->put($controllerPath, ltrim($controller));
+         appendUseStatement($controllerPath,  "Illuminate\Foundation\Auth\Access\AuthorizesRequests");
+         appendUseStatement($controllerPath,  "Illuminate\Foundation\Validation\ValidatesRequests");
+         appendUseStatement($controllerPath,  "Illuminate\Routing\Controller as BaseController");
+         appendUseStatement($controllerPath,  "namespace {$rootNamespace}{$controllersDirectoryNamespace}", false);
+      }
    }
 }
 
@@ -946,5 +1059,125 @@ if (!function_exists('format')) {
    {
       $command = escapeshellcmd("./vendor/bin/pint " . escapeshellarg($path));
       exec($command, $output, $returnCode);
+   }
+}
+
+if (!function_exists('generateCentralizeController')) {
+   function generateCentralizeController()
+   {
+      $rootNamespace = getRootNamespace();
+      $nameSpaceRootDirectory = getDirectoryFromNamespace($rootNamespace);
+      $controllersDirectory = findBasesDirectory($nameSpaceRootDirectory, 'Controllers');
+
+      $controllersDirectoryNamespace = str_replace('/', '\\', $controllersDirectory);
+      $centralizePath = $nameSpaceRootDirectory  . $controllersDirectory . '/Central.php';
+
+      $index = getCentralIndex();
+      $show = getCentralShow();
+      $store = getCentralStore();
+      $update = getCentralUpdate();
+      $destroy = getCentralDestroy();
+
+      $centralClass = <<<CENTRAL
+      <?php
+        class Central
+        {
+            {$index}
+
+            {$show}
+
+            {$store}
+
+            {$update}
+
+            {$destroy}
+        }
+      CENTRAL;
+
+      // Central
+      if (!file_exists($centralizePath)) {
+         app()->files->put($centralizePath, ltrim($centralClass));
+         appendUseStatement($centralizePath,  "Illuminate\Http\Response");
+         appendUseStatement($centralizePath,  "namespace {$rootNamespace}{$controllersDirectoryNamespace}", false);
+      }
+   }
+}
+
+if (!function_exists('getCentralIndex')) {
+   function getCentralIndex()
+   {
+      $centralIndex = <<<INDEX
+         public static function index(\$model, \$resource)
+         {
+            \$limit = request()->integer('limit');
+            \$limit = \$limit > 0 ? request()->integer('limit') : 10;
+            \$query = call_user_func([\$model, 'query']);
+            \$query = \$query->paginate(\$limit);
+            return call_user_func([\$resource, 'collection'], \$query);
+         }
+      INDEX;
+      return $centralIndex;
+   }
+}
+
+if (!function_exists('getCentralShow')) {
+   function getCentralShow()
+   {
+      $centralShow = <<<SHOW
+            public static function show(\$model, \$resource, \$id)
+            {
+               \$model = call_user_func([\$model, 'findOrFail'], (int) \$id);
+               return (new \ReflectionClass(\$resource))->newInstanceArgs([\$model]);
+            }
+      SHOW;
+      return $centralShow;
+   }
+}
+
+if (!function_exists('getCentralStore')) {
+   function getCentralStore()
+   {
+      $centralStore = <<<STORE
+               public static function store(\$model, \$resource, array \$data)
+               {
+                  return (new \ReflectionClass(\$resource))->newInstanceArgs([call_user_func([\$model, 'create'], \$data)]);
+               }
+         STORE;
+      return $centralStore;
+   }
+}
+
+if (!function_exists('getCentralUpdate')) {
+   function getCentralUpdate()
+   {
+      $centralUpdate = <<<UPDATE
+                           public static function update(\$model, \$resource, int \$id, array \$data)
+                           {
+                              \$model = call_user_func([\$model, 'findOrFail'], (int) \$id);
+                              if (count(\$data)) {
+                                 \$model->update(\$data);
+                              }
+                              return (new \ReflectionClass(\$resource))->newInstanceArgs([\$model]);
+                           }
+         UPDATE;
+      return $centralUpdate;
+   }
+}
+
+if (!function_exists('getCentralDestroy')) {
+   function getCentralDestroy()
+   {
+      $centralDestroy = <<<DESTROY
+                              public static function destroy(\$model, int \$id)
+                              {
+                                 \$model = call_user_func([\$model, 'find'], (int) \$id);
+
+                                 if (\$model) {
+                                    \$model->delete();
+                                 }
+                                 return response('success', Response::HTTP_OK);
+                              }
+         DESTROY;
+      return $centralDestroy;
    }
 }

@@ -28,7 +28,8 @@ class KjosMakeRouteApiCommand extends GeneratorCommand
     protected $signature = 'kjos:make:api 
     {name : the prefix of the site}
     {--f|force : Force api creation if it already exists}
-    {--eh|errorhandler : Enable error handling mode}';
+    {--eh|errorhandler : Enable error handling mode}
+    {--c|centralize : Enable centralize mode}';
 
     private ?array $runtimeDatas = [];
 
@@ -38,12 +39,13 @@ class KjosMakeRouteApiCommand extends GeneratorCommand
         $apiRoutePath = base_path("routes/api.php");
         $force = $this->option('force');
         $errorHandler = $this->option('errorhandler');
+        $centralize = $this->option('centralize');
 
         // Add new routes to api.php
         generateApi($prefix, $force, $apiRoutePath);
 
         // Add Corresponding controller file
-        generateControllers($prefix, $force, $apiRoutePath, $errorHandler);
+        generateControllers($prefix, $force, $apiRoutePath, $errorHandler, $centralize);
 
         // Questions
         $this->askSomesQuestions($prefix);
