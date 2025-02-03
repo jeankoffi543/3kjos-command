@@ -113,7 +113,7 @@ if (!function_exists('getDirectoryFromNamespace')) {
 }
 
 if (!function_exists('generateControllers')) {
-   function generateControllers($prefix, $force, $apiRoutePath, $errorHandler = null, $centralize = null)
+   function generateControllers($prefix, $force, $apiRoutePath, $errorHandler = null, $centralize = null, $factory = null)
    {
       $rootNamespace = getRootNamespace();
       $nameSpaceRootDirectory = getDirectoryFromNamespace($rootNamespace);
@@ -121,7 +121,7 @@ if (!function_exists('generateControllers')) {
 
       $controllersDirectoryNamespace = str_replace('/', '\\', $controllersDirectory);
       $controllerPath = $nameSpaceRootDirectory  . $controllersDirectory . '/' . Str::studly($prefix) . 'Controller.php';
-      dump($controllerPath);
+
       if ($errorHandler) {
          generateErrorHandlerTraits();
       }
@@ -663,6 +663,7 @@ if (!function_exists('generateModels')) {
       }
 
       // Add namespace allway at the end
+      appendUseStatement($modelPath, "Database\\Factories\\{$prefix}Factory");
       appendUseStatement($modelPath, "namespace {$rootNamespace}{$modelsDirectoryNamespace}", false);
    }
 }
