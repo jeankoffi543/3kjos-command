@@ -25,6 +25,7 @@ this command will create:
 
 ### --f|force
 allows you to force the creation of files if they exist
+
 ```php artisan kjos:make:api name --force```
 
 or
@@ -96,7 +97,7 @@ Centralized management of `index`, `show`, `store`, `update` and `delete` method
 
 Generate relative model factory base on relative model attributes
 
-```php artisan kjos:make:api name --gactory```
+```php artisan kjos:make:api name --factory```
 
 ```php
 public function definition(): array
