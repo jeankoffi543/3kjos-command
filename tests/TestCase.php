@@ -16,12 +16,12 @@ class TestCase extends Orchestra
     {
         parent::tearDown();
         removeTestDirectory();
-    } 
+    }
 
     protected function getPackageProviders($app)
     {
         return [
-            \Kjos\Command\CommandServiceProvider::class
+            \Kjos\Command\CommandServiceProvider::class,
         ];
     }
 }

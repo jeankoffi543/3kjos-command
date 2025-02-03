@@ -7,13 +7,12 @@ use Illuminate\Support\ServiceProvider;
 class CommandServiceProvider extends ServiceProvider
 {
     protected $commands = [
-        "KjosMakeRouteApi" => \Kjos\Command\Commands\KjosMakeRouteApiCommand::class,
+        'KjosMakeRouteApi' => \Kjos\Command\Commands\KjosMakeRouteApiCommand::class,
     ];
 
     public function boot()
     {
         // Load routes, views, migrations, etc.
-        
     }
 
     public function register()
@@ -36,5 +35,4 @@ class CommandServiceProvider extends ServiceProvider
 
         $this->commands(array_values($commands));
     }
-
 }

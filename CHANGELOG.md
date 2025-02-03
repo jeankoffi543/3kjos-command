@@ -19,3 +19,10 @@ the new route code remove the content of **api.php**
 
 ### Bug fixed
 Resolve model file namespace order
+
+# v2.0.0 : 03/02/2025
+
+### UPDATE
+**Add error Handler** Use a central method for all controller method to handle error
+**Centralize model action** centralize contoller method actions
+**Create models factories** Generate relative model factory
