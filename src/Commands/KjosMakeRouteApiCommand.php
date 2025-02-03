@@ -2,13 +2,11 @@
 
 namespace Kjos\Command\Commands;
 
-use Illuminate\Console\GeneratorCommand;
-use Illuminate\Support\Str;
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
-use Symfony\Component\Console\Attribute\AsCommand;
 use Faker\Factory as Faker;
+use Illuminate\Console\GeneratorCommand;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
+use Symfony\Component\Console\Attribute\AsCommand;
 
 #[AsCommand(name: 'kjos:make:api')]
 class KjosMakeRouteApiCommand extends GeneratorCommand
@@ -39,7 +37,7 @@ class KjosMakeRouteApiCommand extends GeneratorCommand
     public function handle()
     {
         $prefix = $this->argument('name');
-        $apiRoutePath = base_path("routes/api.php");
+        $apiRoutePath = base_path('routes/api.php');
         $force = $this->option('force');
         $errorHandler = $this->option('errorhandler');
         $centralize = $this->option('centralize');
@@ -59,8 +57,7 @@ class KjosMakeRouteApiCommand extends GeneratorCommand
         // Format code
         format($apiRoutePath);
         format(getAppDirectory());
-        format(base_path("database/factories"));
-
+        format(base_path('database/factories'));
 
         return false;
     }
@@ -70,7 +67,7 @@ class KjosMakeRouteApiCommand extends GeneratorCommand
      */
     protected function getStub(): string
     {
-        return "";
+        return '';
     }
 
     protected function askSomesQuestions($prefix)
@@ -78,7 +75,7 @@ class KjosMakeRouteApiCommand extends GeneratorCommand
         $databaseFields = [];
 
         $loop = 0;
-        while ($createDataBaseFields = $this->ask("Do you want to create database fields?", 'yes') === 'yes') {
+        while ($createDataBaseFields = $this->ask('Do you want to create database fields?', 'yes') === 'yes') {
             $databaseFields[] = $this->fieldsQuestion($prefix, $loop);
             $loop++;
         }
@@ -166,7 +163,6 @@ class KjosMakeRouteApiCommand extends GeneratorCommand
             'year',
         ];
 
-
         $fields = [];
 
         // ask for field's type
@@ -175,78 +171,75 @@ class KjosMakeRouteApiCommand extends GeneratorCommand
             $fieldTypes,
             $defaultIndex = 0 // Optional: The index of the default option
         );
-        $fields["type"] = $selectedType;
+        $fields['type'] = $selectedType;
 
         // for certain field types like 'string' or 'char', you may want to ask for a length
         if (in_array($selectedType, ['string', 'char'])) {
             do {
-                $length = $this->ask("Enter the field length. Ex: 255");
-            } while (!is_numeric($length));
-            $fields["length"] = $length;
+                $length = $this->ask('Enter the field length. Ex: 255');
+            } while (! is_numeric($length));
+            $fields['length'] = $length;
         }
 
         // ask for field's name
         do {
-            $input = $this->ask("Enter your database field name. Ex: name");
-        } while (!$input);
-        $fields["name"] = $input;
-
+            $input = $this->ask('Enter your database field name. Ex: name');
+        } while (! $input);
+        $fields['name'] = $input;
 
         // ask for field nullable
         do {
-            $input = $this->ask("Field is nullable?", 'yes');
-        } while ($input !== "yes" && $input !== "no");
-        $fields["nullable"] = $input;
+            $input = $this->ask('Field is nullable?', 'yes');
+        } while ($input !== 'yes' && $input !== 'no');
+        $fields['nullable'] = $input;
 
         // ask for field unique
         do {
-            $input = $this->ask("Field is unique?", 'no');
-        } while ($input !== "yes" && $input !== "no");
-        $fields["unique"] = $input;
+            $input = $this->ask('Field is unique?', 'no');
+        } while ($input !== 'yes' && $input !== 'no');
+        $fields['unique'] = $input;
 
         // ask for field indexed
         do {
-            $input = $this->ask("Field is can be indexed?", 'no');
-        } while ($input !== "yes" && $input !== "no");
-        $fields["indexed"] = $input === "yes" ? true : false;
-
+            $input = $this->ask('Field is can be indexed?', 'no');
+        } while ($input !== 'yes' && $input !== 'no');
+        $fields['indexed'] = $input === 'yes' ? true : false;
 
         // ask for a default value if needed
-        if ($this->ask("Does the field have a default value?", 'no') === 'yes') {
-            $defaultValue = $this->ask("Enter the default value:");
-            $fields["default"] = $defaultValue;
+        if ($this->ask('Does the field have a default value?', 'no') === 'yes') {
+            $defaultValue = $this->ask('Enter the default value:');
+            $fields['default'] = $defaultValue;
         }
 
-        // ask if timestamps should be added (created_at and updated_at)        
+        // ask if timestamps should be added (created_at and updated_at)
         if ($loop === 0) {
             $this->runtimeDatas['timestamps_exists'] = false;
-            if ($this->ask("Should the table have timestamps (created_at and updated_at)?", 'yes') === 'yes') {
-                $fields["timestamps"] = true;
+            if ($this->ask('Should the table have timestamps (created_at and updated_at)?', 'yes') === 'yes') {
+                $fields['timestamps'] = true;
                 $this->runtimeDatas['timestamps_exists'] = true;
             }
         } else {
-            if (!$this->runtimeDatas['timestamps_exists']) {
-
-                if ($this->ask("Should the table have timestamps (created_at and updated_at)?", 'yes') === 'yes') {
-                    $fields["timestamps"] = true;
+            if (! $this->runtimeDatas['timestamps_exists']) {
+                if ($this->ask('Should the table have timestamps (created_at and updated_at)?', 'yes') === 'yes') {
+                    $fields['timestamps'] = true;
                     $this->runtimeDatas['timestamps_exists'] = true;
                 }
             }
         }
 
         // ask if the field should have a comment
-        if ($this->ask("Would you like to add a comment to the field?", 'no') === 'yes') {
-            $comment = $this->ask("Enter the field comment");
-            $fields["comment"] = $comment;
+        if ($this->ask('Would you like to add a comment to the field?', 'no') === 'yes') {
+            $comment = $this->ask('Enter the field comment');
+            $fields['comment'] = $comment;
         }
 
         // ask if the field is a foreign key
-        if ($this->ask("Is the field a foreign key?", 'no') === 'yes') {
-            $relatedTable = $this->ask("Enter the related table name:");
+        if ($this->ask('Is the field a foreign key?', 'no') === 'yes') {
+            $relatedTable = $this->ask('Enter the related table name:');
             $relatedField = $this->ask("Enter the related table field name, typically 'id':", 'id');
-            $fields["foreign"] = [
+            $fields['foreign'] = [
                 'table' => $relatedTable,
-                'field' => $relatedField
+                'field' => $relatedField,
             ];
         }
 
@@ -261,49 +254,48 @@ class KjosMakeRouteApiCommand extends GeneratorCommand
         $schema .= "            \$table->id();\n";
 
         foreach ($fields as $field) {
-            $line = "            \$table->" . $field['type'] . "('" . $field['name'] . "')";
+            $line = '            $table->'.$field['type']."('".$field['name']."')";
 
             if (isset($field['length'])) {
-                $line .= "(" . $field['length'] . ")";
+                $line .= '('.$field['length'].')';
             }
 
             if (isset($field['nullable']) && $field['nullable'] === true) {
-                $line .= "->nullable()";
+                $line .= '->nullable()';
             }
 
             if (isset($field['default'])) {
-                $line .= "->default('" . $field['default'] . "')";
+                $line .= "->default('".$field['default']."')";
             }
 
             if (isset($field['unsigned']) && $field['unsigned'] === true) {
-                $line .= "->unsigned()";
+                $line .= '->unsigned()';
             }
 
             if (isset($field['indexed']) && $field['indexed'] === true) {
-                $line .= "->index()";
+                $line .= '->index()';
             }
 
             if (isset($field['unique']) && $field['unique'] === true) {
-                $line .= "->unique()";
+                $line .= '->unique()';
             }
 
             if (isset($field['foreign'])) {
-                $line .= ";\n            \$table->foreign('" . $field['name'] . "')->references('" . $field['foreign']['field'] . "')->on('" . $field['foreign']['table'] . "')";
+                $line .= ";\n            \$table->foreign('".$field['name']."')->references('".$field['foreign']['field']."')->on('".$field['foreign']['table']."')";
             }
 
             if (isset($field['comment'])) {
-                $line .= "->comment('" . addslashes($field['comment']) . "')";
+                $line .= "->comment('".addslashes($field['comment'])."')";
             }
 
-            $schema .= $line . ";\n";
+            $schema .= $line.";\n";
         }
 
         if (isset($fields[0]['timestamps']) && $fields[0]['timestamps'] === true) {
             $schema .= "            \$table->timestamps();\n";
         }
 
-        $schema .= "        });";
-
+        $schema .= '        });';
 
         // Optionally, you can save the schema to a migration file
         // ...
@@ -323,24 +315,22 @@ class KjosMakeRouteApiCommand extends GeneratorCommand
         $rootNamespace = getRootNamespace();
         $nameSpaceRootDirectory = getDirectoryFromNamespace($rootNamespace);
         $modelsDirectory = findBasesDirectory($nameSpaceRootDirectory, 'Models');
-        if (!$modelsDirectory) {
-            mkdir($nameSpaceRootDirectory  . "/Models", 0777, true);
+        if (! $modelsDirectory) {
+            mkdir($nameSpaceRootDirectory.'/Models', 0777, true);
             $modelsDirectory = findBasesDirectory($nameSpaceRootDirectory, 'Models');
         }
         $modelsDirectoryNamespace = str_replace('/', '\\', $modelsDirectory);
 
-
-
         // Add fillable fields
         foreach ($fields as $field) {
-            $fillable[] = "'" . $field['name'] . "'";
+            $fillable[] = "'".$field['name']."'";
         }
-        $modelCode = "    protected \$fillable = [" . implode(', ', $fillable) . "];\n";
+        $modelCode = '    protected $fillable = ['.implode(', ', $fillable)."];\n";
 
         // Add factory
         if ($this->option('factory')) {
             $modelCode .= "\n    protected static function newFactory()\n    {\n";
-            $modelCode .= "        return " . Str::studly($modelName) . "Factory::new();\n";
+            $modelCode .= '        return '.Str::studly($modelName)."Factory::new();\n";
             $modelCode .= "    }\n";
 
             $this->generateFactory($modelName, $fields);
@@ -351,13 +341,13 @@ class KjosMakeRouteApiCommand extends GeneratorCommand
             if (isset($field['foreign'])) {
                 $relationshipMethod = Str::camel(Str::singular($field['foreign']['table']));
                 $modelCode .= "\n    public function {$relationshipMethod}()\n    {\n";
-                $modelCode .= "        return \$this->belongsTo(" . Str::studly($field['foreign']['table']) . "::class, '" . $field['name'] . "');\n";
+                $modelCode .= '        return $this->belongsTo('.Str::studly($field['foreign']['table'])."::class, '".$field['name']."');\n";
                 $modelCode .= "    }\n";
                 $relationships[] = $relationshipMethod;
 
                 $modelNamesapce[] = [
-                    'model' =>  $rootNamespace .  $modelsDirectoryNamespace . "\\" . Str::studly($field['foreign']['table']),
-                    'directory' => $nameSpaceRootDirectory . "Models/" . $modelName . '.php',
+                    'model' => $rootNamespace.$modelsDirectoryNamespace.'\\'.Str::studly($field['foreign']['table']),
+                    'directory' => $nameSpaceRootDirectory.'Models/'.$modelName.'.php',
                 ];
             }
         }
@@ -365,13 +355,12 @@ class KjosMakeRouteApiCommand extends GeneratorCommand
         return ['model_code' => $modelCode, 'model_namespace' => $modelNamesapce];
     }
 
-
     protected function generateFakeData($columnType)
     {
         $faker = Faker::create();
 
         switch ($columnType) {
-                // Types numériques
+            // Types numériques
             case 'bigIncrements':
             case 'increments':
             case 'tinyIncrements':
@@ -451,7 +440,7 @@ class KjosMakeRouteApiCommand extends GeneratorCommand
             case 'multiPoint':
             case 'multiPolygon':
                 // Pour les géométries, utilise des valeurs génériques ou un générateur spécifique
-                return 'POINT(' . $faker->latitude . ' ' . $faker->longitude . ')';
+                return 'POINT('.$faker->latitude.' '.$faker->longitude.')';
 
             case 'set':
                 return $faker->randomElement(['a', 'b', 'c', 'd']); // Exemple de set
@@ -487,23 +476,23 @@ class KjosMakeRouteApiCommand extends GeneratorCommand
         $nameSpaceRootDirectory = getDirectoryFromNamespace($rootNamespace);
 
         $model = Str::studly($modelName);
-        $factoriesDirectory = base_path('database/factories') . '/' . $model . 'Factory.php';
+        $factoriesDirectory = base_path('database/factories').'/'.$model.'Factory.php';
 
         // Models
         $modelsDirectory = findBasesDirectory($nameSpaceRootDirectory, 'Models');
 
         $modelsDirectoryNamespace = str_replace('/', '\\', $modelsDirectory);
-        $modelNamespace = $rootNamespace .  $modelsDirectoryNamespace . "\\" . $model;
+        $modelNamespace = $rootNamespace.$modelsDirectoryNamespace.'\\'.$model;
 
         $definition = [];
         foreach ($fields as $field) {
             if ($field['name'] == 'email') {
                 $type = 'email';
-            } else if ($field['name'] == 'password') {
+            } elseif ($field['name'] == 'password') {
                 $type = 'password';
-            } else if ($field['name'] == 'lastname') {
+            } elseif ($field['name'] == 'lastname') {
                 $type = 'lastname';
-            } else if ($field['name'] == 'firstname') {
+            } elseif ($field['name'] == 'firstname') {
                 $type = 'firstname';
             } else {
                 $type = $field['type'];
@@ -533,12 +522,12 @@ class KjosMakeRouteApiCommand extends GeneratorCommand
             }
         FACTORY;
 
-        if (!File::exists($factoriesDirectory)) {
+        if (! File::exists($factoriesDirectory)) {
             File::put($factoriesDirectory, ltrim($factory));
         }
 
-        appendUseStatement($factoriesDirectory,  $modelNamespace);
-        appendUseStatement($factoriesDirectory,  "Illuminate\Database\Eloquent\Factories\Factory");
+        appendUseStatement($factoriesDirectory, $modelNamespace);
+        appendUseStatement($factoriesDirectory, "Illuminate\Database\Eloquent\Factories\Factory");
         appendUseStatement($factoriesDirectory, "namespace Database\Factories", false);
     }
 }

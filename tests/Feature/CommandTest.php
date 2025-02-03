@@ -2,10 +2,9 @@
 
 /**
  * @var $this
- *  
+ *
  * */
 test('example', function () {
-
     $fieldTypes = [
         'bigIncrements',
         'bigInteger',
@@ -72,7 +71,7 @@ test('example', function () {
     $faker = \Faker\Factory::create();
 
     // Option without --errorhandler
-    test()->artisan('kjos:make:api ' . $faker->domainWord())
+    test()->artisan('kjos:make:api '.$faker->domainWord())
         ->expectsQuestion('Do you want to create database fields?', 'yes')
         ->expectsChoice(
             'use arrow to select your database field type. Ex: string', // The question being asked
@@ -129,10 +128,8 @@ test('example', function () {
         ->expectsQuestion("Enter the related table field name, typically 'id':", 'id')
         ->expectsQuestion('Do you want to create database fields?', 'no');
 
-
-    
-        // Option --errorhandler
-    test()->artisan('kjos:make:api ' . $faker->domainWord() . ' --force --errorhandler')
+    // Option --errorhandler
+    test()->artisan('kjos:make:api '.$faker->domainWord().' --force --errorhandler')
         ->expectsQuestion('Do you want to create database fields?', 'yes')
         ->expectsChoice(
             'use arrow to select your database field type. Ex: string', // The question being asked
@@ -188,12 +185,10 @@ test('example', function () {
         ->expectsQuestion('Enter the related table name:', 'partner')
         ->expectsQuestion("Enter the related table field name, typically 'id':", 'id')
         ->expectsQuestion('Do you want to create database fields?', 'no');
-
-
 
     // Option --centralize
-    
-    test()->artisan('kjos:make:api ' . $faker->domainWord() . ' --force --errorhandler --centralize --factory')
+
+    test()->artisan('kjos:make:api '.$faker->domainWord().' --force --errorhandler --centralize --factory')
         ->expectsQuestion('Do you want to create database fields?', 'yes')
         ->expectsChoice(
             'use arrow to select your database field type. Ex: string', // The question being asked
