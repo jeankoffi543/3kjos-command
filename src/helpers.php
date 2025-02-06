@@ -121,6 +121,7 @@ if (! function_exists('generateControllers')) {
 
         $controllersDirectoryNamespace = str_replace('/', '\\', $controllersDirectory);
         $controllerPath = $nameSpaceRootDirectory.$controllersDirectory.'/'.Str::studly($prefix).'Controller.php';
+
         if ($errorHandler) {
             generateErrorHandlerTraits();
         }
@@ -921,7 +922,7 @@ if (! function_exists('generateMigrations')) {
             $migrationsDirectory = base_path('database'.$migrationsDirectory);
             $files = glob($migrationsDirectory.'/*');
 
-            if ($files !== false) {
+            if (filled($files)) {
                 foreach ($files as $file) {
                     if (is_file($file)) {
                         unlink($file);
@@ -936,9 +937,8 @@ if (! function_exists('generateMigrations')) {
             }
 
             // Remove controllers directory files
-            $controllersDirectory = $nameSpaceRootDirectory.'Controllers';
+            $controllersDirectory = $nameSpaceRootDirectory.'Http/Controllers';
             $files = glob($controllersDirectory.'/*');
-
             if ($files !== false) {
                 foreach ($files as $file) {
                     if (is_file($file)) {
@@ -960,7 +960,7 @@ if (! function_exists('generateMigrations')) {
             }
 
             // Remove resources directory files
-            $resourcesDirectory = $nameSpaceRootDirectory.'Resources';
+            $resourcesDirectory = $nameSpaceRootDirectory.'Http/Resources';
             $files = glob($resourcesDirectory.'/*');
 
             if ($files !== false) {
@@ -972,8 +972,41 @@ if (! function_exists('generateMigrations')) {
             }
 
             // Remove requests directory files
-            $requestsDirectory = $nameSpaceRootDirectory.'Requests';
+            $requestsDirectory = $nameSpaceRootDirectory.'Http/Requests';
             $files = glob($requestsDirectory.'/*');
+            if ($files !== false) {
+                foreach ($files as $file) {
+                    if (is_file($file)) {
+                        unlink($file);
+                    }
+                }
+            }
+
+            // Remove Factories directory files
+            $dir = base_path('database/factories');
+            $files = glob($dir.'/*');
+            if ($files !== false) {
+                foreach ($files as $file) {
+                    if (is_file($file)) {
+                        unlink($file);
+                    }
+                }
+            }
+
+            // Remove Tests directory files
+            $dir = base_path('tests/Feature');
+            $files = glob($dir.'/*');
+            if ($files !== false) {
+                foreach ($files as $file) {
+                    if (is_file($file)) {
+                        unlink($file);
+                    }
+                }
+            }
+
+            // Remove Tests directory files
+            $dir = base_path('tests/Datasets');
+            $files = glob($dir.'/*');
             if ($files !== false) {
                 foreach ($files as $file) {
                     if (is_file($file)) {
@@ -1191,5 +1224,109 @@ if (! function_exists('getCentralDestroy')) {
          DESTROY;
 
         return $centralDestroy;
+    }
+}
+
+if (! function_exists('getNameSpace')) {
+    function getNameSpace($parentDirectory, $name = null)
+    {
+        $name = filled($name) ? '\\'.Str::studly($name) : '';
+        $rootNamespace = getRootNamespace();
+        $nameSpaceRootDirectory = getDirectoryFromNamespace($rootNamespace);
+        $modelsDirectory = findBasesDirectory($nameSpaceRootDirectory, $parentDirectory);
+        if (! $modelsDirectory) {
+            mkdir($nameSpaceRootDirectory.'/'.$parentDirectory, 0777, true);
+            $modelsDirectory = findBasesDirectory($nameSpaceRootDirectory, $parentDirectory);
+        }
+
+        return $rootNamespace.str_replace('/', '\\', $modelsDirectory).$name;
+    }
+}
+
+if (! function_exists('getPathFromNamespace')) {
+    function getPathFromNamespace($parentDirectory, $fileName, $prefix = null)
+    {
+        $prefix = $prefix ?? '';
+        $rootNamespace = getRootNamespace();
+        $nameSpaceRootDirectory = getDirectoryFromNamespace($rootNamespace);
+        $parentDirectory = findBasesDirectory($nameSpaceRootDirectory, $parentDirectory);
+
+        return $nameSpaceRootDirectory.$parentDirectory.'/'.$prefix.$fileName;
+    }
+}
+
+if (! function_exists('generateOppositeValue')) {
+    if (! function_exists('generateOppositeValue')) {
+        function generateOppositeValue(string $type)
+        {
+            $faker = \Faker\Factory::create();
+
+            $opposites = [
+                'bigIncrements' => $faker->word,
+                'bigInteger' => $faker->word,
+                'binary' => $faker->text,
+                'boolean' => ! $faker->boolean,
+                'char' => $faker->numberBetween(1, 9999),
+                'date' => $faker->randomNumber(),
+                'dateTime' => $faker->randomNumber(),
+                'dateTimeTz' => $faker->randomNumber(),
+                'decimal' => $faker->word,
+                'double' => $faker->word,
+                'enum' => $faker->randomNumber(),
+                'float' => $faker->word,
+                'geometry' => $faker->word,
+                'geometryCollection' => $faker->word,
+                'increments' => $faker->word,
+                'integer' => $faker->word,
+                'ipAddress' => $faker->numberBetween(1000, 99999),
+                'json' => $faker->word,
+                'jsonb' => $faker->word,
+                'lineString' => $faker->word,
+                'longText' => $faker->randomNumber(),
+                'macAddress' => $faker->randomNumber(),
+                'mediumIncrements' => $faker->word,
+                'mediumInteger' => $faker->word,
+                'mediumText' => $faker->randomNumber(),
+                'morphs' => $faker->randomNumber(),
+                'multiLineString' => $faker->word,
+                'multiPoint' => $faker->word,
+                'multiPolygon' => $faker->word,
+                'nullableMorphs' => $faker->randomNumber(),
+                'nullableTimestamps' => $faker->randomNumber(),
+                'nullableUuidMorphs' => $faker->randomNumber(),
+                'point' => $faker->word,
+                'polygon' => $faker->word,
+                'rememberToken' => $faker->randomNumber(),
+                'set' => $faker->randomNumber(),
+                'smallIncrements' => $faker->word,
+                'smallInteger' => $faker->word,
+                'softDeletes' => $faker->randomNumber(),
+                'softDeletesTz' => $faker->randomNumber(),
+                'string' => $faker->word,
+                'text' => $faker->randomNumber(),
+                'time' => $faker->randomNumber(),
+                'timeTz' => $faker->randomNumber(),
+                'timestamp' => $faker->randomNumber(),
+                'timestampTz' => $faker->randomNumber(),
+                'timestamps' => $faker->randomNumber(),
+                'tinyIncrements' => $faker->word,
+                'tinyInteger' => $faker->word,
+                'tinyText' => $faker->randomNumber(),
+                'unsignedBigInteger' => $faker->word,
+                'unsignedDecimal' => $faker->word,
+                'unsignedInteger' => $faker->word,
+                'unsignedMediumInteger' => $faker->word,
+                'unsignedSmallInteger' => $faker->word,
+                'unsignedTinyInteger' => $faker->word,
+                'uuid' => $faker->randomNumber(),
+                'uuidMorphs' => $faker->randomNumber(),
+                'year' => $faker->word,
+            ];
+
+            $value = $opposites[$type] ?? null;
+
+            // Ajouter des guillemets si c'est une chaîne
+            return is_string($value) ? "\"$value\"" : $value;
+        }
     }
 }

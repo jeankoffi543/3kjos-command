@@ -11,7 +11,10 @@
 |
 */
 
-uses(\Kjos\Command\Tests\TestCase::class)->in('Feature');
+uses(
+    Kjos\Command\Tests\TestCase::class,
+    // Illuminate\Foundation\Testing\RefreshDatabase::class
+)->in('Feature', 'Unit');
 
 /*
 |--------------------------------------------------------------------------
