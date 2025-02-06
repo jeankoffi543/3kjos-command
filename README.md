@@ -1,48 +1,68 @@
 # 3kjos-command for Laravel
 
-# INSTALLATION
+# OVERVIEW
+3kjos Command is a Laravel package that provides a powerful command-line tool to quickly generate a complete API structure, including routes, controllers, models, form requests, resources, migrations, and tests. With just one command, you can scaffold an entire API module, significantly reducing development time and maintaining consistency across your project.
+
+# Features
+
+### Automatic API Generation
+ - Adds API route to ``api.php`` (index, show, store, put, delete)
+ - Generates a ``controller`` with all CRUD methods.
+ - Add  ``resource class`` to structure API responses.
+ - Builds a ``model`` with its table name, fillable fields, and relationships.
+ - Generates a ``form request class`` with validation rules.
+ - Creates a ``migration`` with predefined fields.
+ - Generates ``feature tests`` for the API.
+
+### Error Handling with ``errorHandler`` (Optional)
+ - Centralizes error management across controllers.
+ - Handles ``ModelNotFoundException``, ``QueryException``, and other errors.
+ - Ensures proper HTTP responses: ``404``, ``403``, ``422``, ``500``.
+
+### Centralized Controller Logic (Optional)
+ - Uses a ``Central`` service to handle CRUD operations.
+ - Reduces code duplication by managing common logic in one place.
+
+### Factory Generation
+
+ - Creates a ``factory`` for the model with relevant attributes.
+ - Simplifies database seeding and testing.
+
+
+# Installation
 
 ```composer require kjos/command```
 
-# USAGE
+
+# Usage
 
 ```php artisan kjos:make:api name```
 
-### Tip
+ - Replace ``name`` with the desired API entity (e.g., ``user``, ``product``).
+ - This will create all necessary files and append routes automatically.
 
-**name** is the name of the route to create, the name of the migration table, the name of the controller, model, form request, resource class and file name.
+# Available Options
+| Option            | Alias | Description |
+|:-----------------:|:-----:|-------------|
+| `--force`         | `-f`  | Overwrites existing files if they exist. |
+| `--errorhandler`  | `-er` | Enables centralized error handling for controller methods. |
+| `--centralize`    | `-c`  | Uses a central class to manage CRUD operations. |
+| `--factory`       |       | Generates a model factory with sample data. |
+| `--test`          |       | Generates tests files relative to a madel. |
 
-this command will create:
+# Example with Options
 
- - append api.php: add route for **name** (index, show, store, put, delete)
- - create a controller file **NameController** with all methods
- - create resource file **NameResource** with all values from setting fields
- - create model file **Name** with table name, fillable array, relations
- - create form request file **NameRequest** with all rules from setting fields
- - create migrations with all setting fields 
+```php artisan kjos:make:api User --force --errorhandler --centralize --factory --test```
 
-# OPTIONS
+This command will:
+✅ Overwrite existing files.
+✅ Enable centralized error handling.
+✅ Use a central CRUD management system.
+✅ Generate a factory for the User model.
 
-### --f|force
-allows you to force the creation of files if they exist
+# Example Generated Code
 
-```php artisan kjos:make:api name --force```
-
-or
-
-```php artisan kjos:make:api name -f```
-
-
-### --er|errorhandler
-
-Use a central method for all controller method to handle error
-
-```php artisan kjos:make:api name --errorhandler```
-
-or
-
-```php artisan kjos:make:api name -er```
-
+### Controller with Error Handling (--errorhandler or -er)
 ```php
  public function store(UserRequest $request)
 {
@@ -68,18 +88,7 @@ The `errorHandler` method is a utility function designed to execute a callable w
 This approach ensures that your application responds to errors with proper HTTP status codes, making error handling more predictable and user-friendly.
 
 
-
-
-### --c|centralize
-
-centralize contoller method actions
-
-```php artisan kjos:make:api name --centralize```
-
-or
-
-```php artisan kjos:make:api name -c```
-
+### Controller with Centralized Logic (--centralize or -c)
 ```php
  public function store(Request $request)
 {
@@ -92,13 +101,7 @@ or
 Centralized management of `index`, `show`, `store`, `update` and `delete` methods
 
 
-
-### --factory
-
-Generate relative model factory base on relative model attributes
-
-```php artisan kjos:make:api name --factory```
-
+### -Generated Factory (--factory)
 ```php
 public function definition(): array
 {
@@ -109,3 +112,12 @@ public function definition(): array
    ];
 }
 ```
+
+# Why Use 3kjos Command?
+🚀 Save Development Time – Automates repetitive tasks.
+✅ Consistency – Ensures a structured and uniform API architecture.
+🔧 Customizable – Offers multiple options for error handling, centralization, and testing.
+📦 Scalable – Easily extendable for future enhancements.
+
+# License
+This package is open-source and available under the MIT License. 🚀
