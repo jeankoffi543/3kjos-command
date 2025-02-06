@@ -26,3 +26,12 @@ Resolve model file namespace order
 **Add error Handler** Use a central method for all controller method to handle error
 **Centralize model action** centralize contoller method actions
 **Create models factories** Generate relative model factory
+
+
+# v2.1.1 : 06/02/2025
+
+### UPDATE
+**Can now genrate tests files** Your can now genrate tests files for all your models
+
+### FIXED
+**Tables and endpoints name to plural** We fix tables and endpoints name to plurals
