@@ -188,7 +188,7 @@ test('example', function () {
 
     // Option --centralize
 
-    test()->artisan('kjos:make:api '.$faker->domainWord().' --force --errorhandler --centralize --factory')
+    test()->artisan('kjos:make:api '.$faker->domainWord().' --force --errorhandler --centralize --factory --test')
         ->expectsQuestion('Do you want to create database fields?', 'yes')
         ->expectsChoice(
             'use arrow to select your database field type. Ex: string', // The question being asked

@@ -4,6 +4,8 @@ namespace Kjos\Command\Commands;
 
 use Faker\Factory as Faker;
 use Illuminate\Console\GeneratorCommand;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -30,7 +32,8 @@ class KjosMakeRouteApiCommand extends GeneratorCommand
     {--f|force : Force api creation if it already exists}
     {--eh|errorhandler : Enable error handling mode}
     {--c|centralize : Enable centralize mode}
-    {--factory : Generate factory for model}';
+    {--factory : Generate factory for model}
+    {--t|test : Generate tests for the api}';
 
     private ?array $runtimeDatas = [];
 
@@ -42,6 +45,7 @@ class KjosMakeRouteApiCommand extends GeneratorCommand
         $errorHandler = $this->option('errorhandler');
         $centralize = $this->option('centralize');
         $factory = $this->option('factory');
+        $test = $this->option('test');
 
         // Add new routes to api.php
         generateApi($prefix, $force, $apiRoutePath);
@@ -57,7 +61,8 @@ class KjosMakeRouteApiCommand extends GeneratorCommand
         // Format code
         format($apiRoutePath);
         format(getAppDirectory());
-        format(base_path('database/factories'));
+        format(base_path('database'));
+        format(base_path('tests'));
 
         return false;
     }
@@ -88,7 +93,6 @@ class KjosMakeRouteApiCommand extends GeneratorCommand
         // Add models
         $generateModel = $this->generateModel($prefix, $databaseFields);
         generateModels($prefix, $generateModel);
-
         // Add migrations
         generateMigrations($prefix, $this->generateSchema($prefix, $databaseFields));
 
@@ -97,6 +101,10 @@ class KjosMakeRouteApiCommand extends GeneratorCommand
 
         // Add Requests
         generateRequests($prefix, $databaseFields);
+
+        if ($this->option('test')) {
+            $this->generateTest($prefix, $databaseFields);
+        }
     }
 
     protected function fieldsQuestion($prefix, $loop = null): ?array
@@ -529,5 +537,516 @@ class KjosMakeRouteApiCommand extends GeneratorCommand
         appendUseStatement($factoriesDirectory, $modelNamespace);
         appendUseStatement($factoriesDirectory, "Illuminate\Database\Eloquent\Factories\Factory");
         appendUseStatement($factoriesDirectory, "namespace Database\Factories", false);
+    }
+
+    protected function generateTest($modelName, $fields)
+    {
+        // Create tests/Datasets and tests/Feature directories if they don't exist
+        $testsDirectory = base_path('tests');
+        if (! File::exists($testsDirectory)) {
+            File::makeDirectory($testsDirectory);
+        }
+        $testsDirectory = base_path('tests/Datasets');
+        if (! File::exists($testsDirectory)) {
+            File::makeDirectory($testsDirectory);
+        }
+        $testsDirectory = base_path('tests/Feature');
+        if (! File::exists($testsDirectory)) {
+            File::makeDirectory($testsDirectory);
+        }
+
+        // Generate tests/Datasets/{$modelName}s.php
+        $this->generateDataset($modelName, $fields);
+
+        // Generate tests/Feature/{$modelName}Test.php
+        $this->generateTestFeature($modelName, $fields);
+    }
+
+    public function generateDataset($modelName, $fields)
+    {
+        $model = Str::studly($modelName);
+        $datasetFile = base_path('tests/Datasets/'.$model.'s.php');
+        $singularModel = Str::lower(Str::singular($model));
+
+        $foreignkeysDatas = $this->getModelRelationsRecursive($model);
+        $createRelations = $foreignkeysDatas['create'] ?? '';
+        $makeRelations = $foreignkeysDatas['make'] ?? '';
+        $nameSpaces = $foreignkeysDatas['namespaces'] ?? '';
+
+        // generate foreign key Model
+        $datasetString = <<<DATASET
+        <?php
+
+            {$nameSpaces};
+
+           dataset('created {$singularModel}', [
+                fn () => {$model}::factory()
+                {$createRelations}
+                ->createOne(),
+            ]);
+
+            dataset('created {$singularModel}s', [
+                fn () => {$model}::factory()->count(30)
+                {$createRelations}
+                ->create(),
+            ]);
+
+            dataset('maked {$singularModel}', [
+                fn () => {$model}::factory()
+                {$makeRelations}
+                ->makeOne(),
+            ]);           
+        DATASET;
+
+        if (! File::exists($datasetFile)) {
+            File::put($datasetFile, ltrim($datasetString));
+        }
+    }
+
+    public function getModelRelationsRecursive($modelName, &$processedModels = [], &$notFoundModel = ['exist' => true, 'path' => ''])
+    {
+        $createRelation = '';
+        $makeRelation = '';
+        $allModelsNameSpace = '';
+
+        $modelMethods = get_class_methods(Model::class);
+
+        $model = Str::studly($modelName);
+        $modelNamespace = getNameSpace('Models', $model);
+
+        if (! class_exists($modelNamespace) || in_array($modelNamespace, $processedModels)) {
+            return ['create' => '', 'make' => ''];
+        }
+
+        $allModelsNameSpace .= <<<NAMESAPCE
+                                use {$modelNamespace};
+                            NAMESAPCE.PHP_EOL;
+
+        // Ajouter le modèle aux modèles traités pour éviter les boucles infinies
+        $processedModels[] = $modelNamespace;
+
+        $modelInstance = app()->make($modelNamespace);
+
+        foreach (get_class_methods($modelInstance) as $method) {
+            // Ignorer les méthodes de modèle par défaut de Laravel
+            if (in_array($method, $modelMethods)) {
+                continue;
+            }
+
+            $this->createModelClassIfNotExists(getNameSpace('Models', Str::studly($method)), $notFoundModel);
+            $relation = $modelInstance->$method();
+
+            if ($relation instanceof Relation) {
+                $relatedModel = class_basename($relation->getRelated());
+
+                // Appel récursif pour récupérer les relations imbriquées
+                $this->getModelRelationsRecursive($relatedModel, $processedModels, $notFoundModel);
+
+                $nameSpace = getNameSpace('Models', $relatedModel);
+
+                $modelComment = $notFoundModel['exist'] ? '' : "//The {$relatedModel} model was not found in the project. Please create it.";
+
+                $allModelsNameSpace .= <<<NAMESAPCE
+                        use {$nameSpace};
+                    NAMESAPCE.PHP_EOL;
+
+                // Construction des relations
+                $createRelation .= <<<RELATION
+                    ->for(
+                        {$relatedModel}::factory() {$modelComment}
+                    )
+                    RELATION.PHP_EOL;
+
+                $makeRelation .= <<<RELATION
+                    ->for(
+                        {$relatedModel}::factory() {$modelComment}
+                        ->createOne()
+                    )
+                    RELATION.PHP_EOL;
+
+                // Delete the previously created not founded model
+                if (! $notFoundModel['exist']) {
+                    File::delete($notFoundModel['path']);
+                }
+            }
+        }
+
+        return ['create' => $createRelation, 'make' => $makeRelation, 'namespaces' => $allModelsNameSpace];
+    }
+
+    private function createModelClassIfNotExists($modelNamespace, &$notFoundModel)
+    {
+        $modelName = Str::studly(class_basename($modelNamespace));
+        $modelPath = getPathFromNamespace('Models', Str::studly($modelName).'.php');
+        if (file_exists($modelPath)) {
+            return;
+        }
+
+        $modelTemplate = <<<PHP
+        <?php
+
+        namespace App\Models;
+
+        use Illuminate\Database\Eloquent\Model;
+
+        class {$modelName} extends Model
+        {}
+        PHP;
+
+        if (! file_exists($modelPath)) {
+            $notFoundModel['exist'] = false;
+            $notFoundModel['path'] = $modelPath;
+            file_put_contents($modelPath, $modelTemplate);
+        }
+    }
+
+    public function generateTestFeature($modelName, $fields)
+    {
+        $modelNamespace = getNameSpace('Models', Str::studly($modelName));
+        $modelInstance = app()->make($modelNamespace);
+
+        $structure = array_merge([$modelInstance->getKeyName()], array_map(function ($field) {
+            return $field['name'];
+        }, $fields));
+
+        $model = Str::studly($modelName);
+        $path = base_path('tests/Feature/'.$model.'Test.php');
+
+        // Generate tests/Feature/{$modelName}Test.php
+        $storeTestDatas = $this->generateStoreTestDatas($model, $fields);
+        $updateTestDatas = $this->generateUpdateTestDatas($model, $fields, $modelInstance);
+        $showTestDatas = $this->generateShowTestDatas($model, $fields, $modelInstance);
+        $deleteTestDatas = $this->generateDeleteTestDatas($model, $fields, $modelInstance);
+        $listTestDatas = $this->generateIndexTestDatas($model, $fields, $modelInstance);
+        $structureString = "[\n    '".implode("',\n    '", $structure)."'\n]";
+
+        $testDatas = <<<TEST
+            <?php
+
+            \$structure = {$structureString};
+
+            //tests/Feature/{$model}Test.php
+            
+            {$storeTestDatas}
+            
+            {$updateTestDatas}
+
+            {$showTestDatas}
+
+            {$deleteTestDatas}
+
+            {$listTestDatas}
+        TEST;
+
+        app()->files->put($path, ltrim($testDatas));
+    }
+
+    private function generateValidation($lowerCaseModel, $fields, $method = 'post')
+    {
+        $validationDatas = '';
+        $id = '';
+        if ($method == 'put') {
+            $id = '/\$created->{$modelKey}';
+        }
+
+        foreach ($fields as $field) {
+            $type = $field['type'];
+            $typeValue = generateOppositeValue($type);
+            $name = $field['name'];
+            $validationDatas .= <<< DESCRIBE
+                //Validation {$name}
+                 \$maked->{$name} = {$typeValue};
+                 \$response = \$this->{$method}('/api/{$lowerCaseModel}s{$id}', \$maked->toArray());
+                 \$response->assertBadRequest();
+            DESCRIBE.PHP_EOL;
+        }
+
+        return $validationDatas;
+    }
+
+    private function generateStoreTestDatas($model, $fields)
+    {
+        $modelNamespace = getNameSpace('Models', Str::studly($model));
+        $lowerCaseModel = Str::lower($model);
+        $validationDatas = $this->generateValidation($lowerCaseModel, $fields);
+        $describe = <<< DESCRIBE
+        describe('Store {$model}', function () use (\$structure) {
+            it('Store {$model} successfully', function (\$maked) use (\$structure) {
+                \$response = \$this->post('/api/{$lowerCaseModel}s', \$maked->toArray());
+                \$response->assertCreated();
+
+                \$response->assertJsonStructure(['data' => \$structure]);
+            })->with('maked {$lowerCaseModel}');   
+
+            it('Store {$model} - should validate request datas', function (\$maked) {
+                {$validationDatas}
+            })->with('maked {$lowerCaseModel}');   
+
+            it('Store {$model} - unauthorized access', function (\$maked) {
+                //Create the User factory in your project if not exists
+                \$response = \$this->actingAs(User::factory()->create())->put('/api/{$lowerCaseModel}s', \$maked->toArray());
+                \$response->assertForbidden();
+            })->with('maked {$lowerCaseModel}');
+
+            it('Store {$model} - handle server error', function (\$maked) {
+                \$this->mock({$modelNamespace}::class, function (\$mock) {
+                \$mock->shouldReceive('someMethod')->andThrow(new \Exception('Internal Server Error', 500));
+            });
+
+                \$response = \$this->post('/api/{$lowerCaseModel}s', \$maked->toArray());
+                \$response->assertStatus(500);
+            })->with('maked {$lowerCaseModel}');
+        });
+        DESCRIBE.PHP_EOL;
+
+        return $describe;
+    }
+
+    private function generateUpdateTestDatas($model, $fields, $modelInstance)
+    {
+        $lowerCaseModel = Str::lower($model);
+        $validationDatas = $this->generateValidation($lowerCaseModel, $fields, 'put');
+        $randomdigit = rand(1000, 9999);
+        $modelKey = $modelInstance->getKeyName();
+        $modelNamespace = get_class($modelInstance);
+        $describe = <<< DESCRIBE
+        describe('Update {$model}', function () {
+            it('Update {$model} successfully', function (\$maked, \$created) {
+                \$maked = \$maked();
+                \$created = \$created();
+
+                \$response = \$this->put('/api/{$lowerCaseModel}s/' . \$created->{$modelKey}, \$maked->toArray());
+                \$response->assertOk();
+            })->with('maked {$lowerCaseModel}')->with('created {$lowerCaseModel}');   
+
+            it('Update {$model} - should validate request datas', function (\$maked, \$created) {
+                \$maked = \$maked();
+                \$created = \$created();
+
+                {$validationDatas}
+            })->with('maked {$lowerCaseModel}')->with('created {$lowerCaseModel}');   
+
+            it('Update {$model} - not found', function (\$maked, \$created) {
+                \$maked = \$maked();
+                
+                \$response = \$this->put('/api/{$lowerCaseModel}s/{$randomdigit}', \$maked->toArray());
+                \$response->assertNotFound();
+            })->with('maked {$lowerCaseModel}')->with('created {$lowerCaseModel}');   
+
+             it('Update {$model} - unauthorized access', function (\$maked, \$created) {
+             \$maked = \$maked();
+             \$created = \$created();
+
+             //Create the User factory in your project if not exists
+             \$response = \$this->actingAs(User::factory()->create())->put('/api/{$lowerCaseModel}s/' . \$created->{$modelKey}, \$maked->toArray());
+             \$response->assertForbidden();
+            })->with('maked {$lowerCaseModel}')->with('created {$lowerCaseModel}');
+
+            it('Update {$model} - handle server error', function (\$maked, \$created) {
+            \$this->mock({$modelNamespace}::class, function (\$mock) {
+                \$mock->shouldReceive('someMethod')->andThrow(new \Exception('Internal Server Error', 500));
+            });
+
+             \$maked = \$maked();
+             \$created = \$created();
+
+             \$response = \$this->put('/api/{$lowerCaseModel}s/' . \$created->{$modelKey}, \$maked->toArray());
+             \$response->assertStatus(500);
+            })->with('maked {$lowerCaseModel}')->with('created {$lowerCaseModel}');
+        });
+       DESCRIBE.PHP_EOL;
+
+        return $describe;
+    }
+
+    private function generateShowTestDatas($model, $fields, $modelInstance)
+    {
+        $lowerCaseModel = Str::lower($model);
+        $randomdigit = rand(1000, 9999);
+        $modelKey = $modelInstance->getKeyName();
+        $modelNamespace = get_class($modelInstance);
+        $describe = <<< DESCRIBE
+        describe('Show {$model}', function () use (\$structure) {
+            it('Store {$model} detail successfully', function (\$created) use (\$structure) {
+                \$response = \$this->get('/api/{$lowerCaseModel}s/' . \$created->{$modelKey});
+                \$response->assertOk();
+                \$response->assertJsonStructure(['data' => \$structure]);
+            })->with('created {$lowerCaseModel}');   
+
+            it('Show {$model} - not found', function (\$created) {
+                
+                \$response = \$this->get('/api/{$lowerCaseModel}s/{$randomdigit}');
+                \$response->assertNotFound();
+            })->with('created {$lowerCaseModel}');   
+
+            it('Show {$model} - unauthorized access', function (\$created) {
+                //Create the User factory in your project if not exists
+                \$response = \$this->actingAs(User::factory()->create())->get('/api/{$lowerCaseModel}s/' . \$created->{$modelKey});
+                \$response->assertForbidden();
+            })->with('created {$lowerCaseModel}');
+
+            it('Show {$model} - handle server error', function (\$created) {
+                \$this->mock({$modelNamespace}::class, function (\$mock) {
+                \$mock->shouldReceive('someMethod')->andThrow(new \Exception('Internal Server Error', 500));
+                });
+                \$response = \$this->get('/api/{$lowerCaseModel}s/' . \$created->{$modelKey});
+                \$response->assertStatus(500);
+            })->with('created {$lowerCaseModel}');
+        });
+       DESCRIBE.PHP_EOL;
+
+        return $describe;
+    }
+
+    private function generateDeleteTestDatas($model, $fields, $modelInstance)
+    {
+        $lowerCaseModel = Str::lower($model);
+        $modelKey = $modelInstance->getKeyName();
+        $modelNamespace = get_class($modelInstance);
+        $describe = <<< DESCRIBE
+        describe('Delete {$model}', function () {
+            it('Delete {$model} successfully', function (\$maked, \$created) {
+                \$maked = \$maked();
+                \$created = \$created();
+
+                \$response = \$this->delete('/api/{$lowerCaseModel}s/' . \$created->{$modelKey});
+                \$response->assertOk();
+            })->with('maked {$lowerCaseModel}')->with('created {$lowerCaseModel}');   
+
+             it('Delete {$model} - unauthorized access', function (\$maked, \$created) {
+             \$maked = \$maked();
+             \$created = \$created();
+
+             //Create the User factory in your project if not exists
+             \$response = \$this->actingAs(User::factory()->create())->delete('/api/{$lowerCaseModel}s/' . \$created->{$modelKey});
+             \$response->assertForbidden();
+            })->with('maked {$lowerCaseModel}')->with('created {$lowerCaseModel}');
+
+            it('Delete {$model} - handle server error', function (\$maked, \$created) {
+            \$this->mock({$modelNamespace}::class, function (\$mock) {
+                \$mock->shouldReceive('someMethod')->andThrow(new \Exception('Internal Server Error', 500));
+            });
+
+             \$maked = \$maked();
+             \$created = \$created();
+
+             \$response = \$this->delete('/api/{$lowerCaseModel}s/' . \$created->{$modelKey});
+             \$response->assertStatus(500);
+            })->with('maked {$lowerCaseModel}')->with('created {$lowerCaseModel}');
+        });
+       DESCRIBE.PHP_EOL;
+
+        return $describe;
+    }
+
+    private function generateIndexTestDatas($model, $fields)
+    {
+        $names = collect($fields)->pluck('name')->toArray();
+        $lowerCaseModel = Str::lower($model);
+        $sortingName = $names[array_rand(collect($fields)->pluck('name')->toArray())];
+        $describe = <<< DESCRIBE
+        describe('List {$model}', function () use (\$structure) {
+            it('List {$model} all datas', function (\$created) use (\$structure) {
+                \$response = \$this->get('/api/{$lowerCaseModel}s');
+                \$response->assertOk();
+
+                \$response->assertJsonStructure(['data' => [
+                    '*' => \$structure
+                ]]);
+
+                \$response = json_decode(\$response->getContent(), true);
+                expect(count(\$response['data']))->toBeInt()->toBe(10);
+            })->with('created {$lowerCaseModel}s');   
+
+            it('List {$model} by page', function (\$created) use (\$structure) {
+                // page 1 with 15 items on 20
+                \$response = \$this->get('/api/{$lowerCaseModel}s?limit=15&page=1');
+                \$response->assertOk();
+                \$response->assertJsonStructure(['data' => [
+                    '*' => \$structure
+                ]]);
+                \$response = json_decode(\$response->getContent(), true);
+                expect(count(\$response['data']))->toBeInt()->toBe(15);
+
+                // page 2 with 15 items on 20
+                \$response = \$this->get('/api/{$lowerCaseModel}s?limit=5&page=2');
+                \$response->assertOk();
+                \$response->assertJsonStructure(['data' => [
+                    '*' => \$structure
+                ]]);
+                \$response = json_decode(\$response->getContent(), true);
+                expect(count(\$response['data']))->toBeInt()->toBe(5);
+            })->with('created {$lowerCaseModel}s');   
+
+            //Uncomment this if you want to enable sort query
+            /*
+            it('List {$model} by sort', function (\$created) use (\$structure) {
+                // Sort by {$sortingName} - asc
+                \$response = \$this->get('/api/{$lowerCaseModel}s?sort[{$sortingName}]=asc&page=1&limit=15');
+                \$response->assertOk();
+                \$response->assertJsonStructure(['data' => [
+                    '*' => \$structure
+                ]]);
+                \$response = json_decode(\$response->getContent(), true);
+                expect(count(\$response['data']))->toBeInt()->toBe(15);
+
+                for (\$i = 1; \$i < count(\$response['data']); \$i++) {
+                    \$this->assertTrue(\$response[\$i - 1]['{$sortingName}'] <= \$response[\$i]['{$sortingName}']);
+                }
+
+                // Sort by {$sortingName} - desc
+                \$response = \$this->get('/api/{$lowerCaseModel}s?sort[{$sortingName}]=desc&page=2&limit=5');
+                \$response->assertOk();
+                \$response->assertJsonStructure(['data' => [
+                    '*' => \$structure
+                ]]);
+                \$response = json_decode(\$response->getContent(), true);
+                expect(count(\$response['data']))->toBeInt()->toBe(5);
+
+                for (\$i = 1; \$i < count(\$response['data']); \$i++) {
+                    \$this->assertTrue(\$response[\$i - 1]['{$sortingName}'] >= \$response[\$i]['{$sortingName}']);
+                }
+            })->with('created {$lowerCaseModel}s');   
+            */
+
+            //Uncomment this if you want to enable search query
+            /*
+            it('List {$model} by search', function (\$created) use (\$structure) {
+                // Save {$sortingName} to search for
+                \${$sortingName} = \$created[0]['{$sortingName}'];
+                \$response = \$this->get('/api/{$lowerCaseModel}s?search=\${$sortingName}');
+                \$response->assertOk();
+                \$response->assertJsonStructure(['data' => [
+                    '*' => \$structure
+                ]]);
+
+                // Assert that {$sortingName} is in the response
+                \$response->assertJsonFragment(['{$sortingName}' => \${$sortingName}]);
+
+                // Count {$sortingName} to greater than 0 and equal to 1
+                \$response = json_decode(\$response->getContent(), true);
+                expect(count(\$response['data']))->toBeInt()->toBeGreaterThan(0)->toEqual(1);
+
+                \$response->assertJsonFragment(['{$sortingName}' => \${$sortingName}]);
+            })->with('created {$lowerCaseModel}s');   
+            */
+
+            //Uncomment this if you want to enable filter query
+            /*
+            it('List {$model} by filter', function (\$created) use (\$structure) {
+                // Save {$sortingName} to search for
+                \${$sortingName} = \$created[0]['{$sortingName}'];
+                \$response = \$this->get('/api/{$lowerCaseModel}s?{$sortingName}=\${$sortingName}');
+                \$response->assertOk();
+                \$response->assertJsonStructure(['data' => [
+                    '*' => \$structure
+                ]]);
+                \$response->assertJsonFragment(['{$sortingName}' => \${$sortingName}]);                
+            })->with('created {$lowerCaseModel}s');   
+            */
+        });
+        DESCRIBE.PHP_EOL;
+
+        return $describe;
     }
 }
