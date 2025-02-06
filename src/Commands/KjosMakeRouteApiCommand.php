@@ -256,7 +256,7 @@ class KjosMakeRouteApiCommand extends GeneratorCommand
 
     protected function generateSchema($prefix, $fields): ?string
     {
-        $prefix = Str::lower($prefix);
+        $prefix = Str::plural(Str::lower($prefix));
         // Generate schema
         $schema = "Schema::create('{$prefix}', function (Blueprint \$table) {\n";
         $schema .= "            \$table->id();\n";

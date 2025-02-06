@@ -28,11 +28,11 @@ if (! function_exists('generateApi')) {
         $controllersDirectory = findBasesDirectory($nameSpaceRootDirectory, 'Controllers');
 
         $controllersDirectoryNamespace = str_replace('/', '\\', $controllersDirectory);
-        $prefixLower = Str::lower($prefix);
+        $prefixLower = Str::plural(Str::lower($prefix));
 
         // Check if prefix already exists in api.php
         if (Str::contains($apiRoutesContents, "'prefix' => '{$prefixLower}'")) {
-            app()->abort(400, "The prefix '{$prefix}' already exists in api.php");
+            app()->abort(400, "The prefix '{$prefixLower}' already exists in api.php");
 
             return true;
         }
@@ -41,8 +41,8 @@ if (! function_exists('generateApi')) {
         // Add the new routes to api.php using the array syntax
         $newRoutes = <<<ROUTES
           
-          \n// Routes for $prefix
-              Route::group(['prefix' => '{$prefix}'], function () {
+          \n// Routes for $prefixLower
+              Route::group(['prefix' => '{$prefixLower}'], function () {
               Route::get('/', [{$controllerClass}::class, 'index']);
               Route::post('/', [{$controllerClass}::class, 'store']);
               Route::get('/{id}', [{$controllerClass}::class, 'show']);
@@ -628,7 +628,7 @@ if (! function_exists('generateModels')) {
             $modelsDirectory = findBasesDirectory($nameSpaceRootDirectory, 'Models');
         }
         $model = $rootNamespace.$modelsDirectoryNamespace.'\\'.Str::studly($prefix);
-        $prefixLower = Str::lower($prefix);
+        $prefixLower = Str::plural(Str::lower($prefix));
 
         // Put prefix in carmel case
         $prefix = Str::studly($prefix);
