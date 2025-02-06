@@ -1,5 +1,4 @@
 {
-  "version" : "2.1.1",
   "name": "kjos/command",
   "description": "Command tool for Laravel and other",
   "license": "MIT",
@@ -22,8 +21,8 @@
     "php": "^7.0|^8.0",
     "illuminate/support": "^8.0",
     "illuminate/database": "^8.0|^11.0",
-    "illuminate/console": "*",
-    "illuminate/routing": "*",
+    "illuminate/console": "^8.0",
+    "illuminate/routing": "^8.0",
     "laravel/pint": "^1.20"
 },
   "autoload": {
