@@ -35,3 +35,8 @@ Resolve model file namespace order
 
 ### FIXED
 **Tables and endpoints name to plural** We fix tables and endpoints name to plurals
+
+# v2.1.2 : 09/06/2025
+
+### UPDATE
+**Laravel 12 compatibility** Now compatible with Laravel version 12
