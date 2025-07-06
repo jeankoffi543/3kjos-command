@@ -1,6 +1,7 @@
 {
   "name": "kjos/command",
   "description": "Command tool for Laravel and other",
+  "version": "1.0.0",
   "license": "MIT",
   "authors": [
     {
@@ -18,12 +19,14 @@
     }
   ],
   "require": {
-    "php": ">=7.0",
+    "php": "^8.2",
     "illuminate/support": "^8.0 || ^9.0 || ^10.0 || ^11.0 ||^12.0",
     "illuminate/database": "^8.0 || ^9.0 || ^10.0 || ^11.0 || ^12.0",
     "illuminate/console": "^8.0 || ^9.0 || ^10.0 || ^11.0 || ^12.0",
     "illuminate/routing": "^8.0 || ^9.0 || ^10.0 || ^11.0 || ^12.0",
-    "laravel/pint": "^1.20"
+    "laravel/pint": "^1.20",
+    "nikic/php-parser": "^5.5",
+    "archtechx/enums": "^1.1"
   },
   "autoload": {
     "psr-4": {

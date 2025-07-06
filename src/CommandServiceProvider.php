@@ -8,6 +8,7 @@ class CommandServiceProvider extends ServiceProvider
 {
     protected $commands = [
         'KjosMakeRouteApi' => \Kjos\Command\Commands\KjosMakeRouteApiCommand::class,
+        'KjosTestRouteApi' => \Kjos\Command\Commands\KjosTestRouteApiCommand::class,
     ];
 
     public function boot()
@@ -17,6 +18,12 @@ class CommandServiceProvider extends ServiceProvider
 
     public function register()
     {
+        $this->publishes([
+            KJOS_COMMAND_MODULE_PATH . '/.stub/3kjos-command.php' => config_path('3kjos-command.php'),
+        ], '3kjos-command');
+        
+        $this->app->bind(\Kjos\Command\Managers\Service::class);
+
         // Register bindings, listeners, etc.
         $this->registerCommands($this->commands);
     }
