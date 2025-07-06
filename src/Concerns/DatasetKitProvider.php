@@ -29,15 +29,15 @@ class DatasetKitProvider
       }
 
 
-      $relations = self::guessRelationMethods(self::getNamespace(self::$entity->getName()));
-      if(empty($relations)) {
-         self::$command->warn('cannot create dataset for ' . self::$entity->getName() . ' because it has no relations or model not found <fg=red> [skipped]</>');
-         return;
-      }
+      // $relations = self::guessRelationMethods(self::getNamespace(self::$entity->getName()));
+      // if(empty($relations)) {
+      //    self::$command->warn('cannot create dataset for ' . self::$entity->getName() . ' because it has no relations or model not found <fg=red> [skipped]</>');
+      //    return;
+      // }
 
-      $uses = self::useStatments($relations);
+      $uses = self::useStatments(self::relations(self::$entity));
 
-      $for = self::buildFor($relations);
+      $for = self::buildFor(self::relations(self::$entity));
       $name = self::$modelName;
       $datasetPlural = NameHelper::namePlural(self::$entity->getName(), NameArgument::Lower);
       $datasetSingular = NameHelper::namesingular(self::$entity->getName(), NameArgument::Lower);

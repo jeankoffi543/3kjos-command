@@ -54,7 +54,7 @@ class TestKitProvider
    {
       $nameStudy = NameHelper::nameSingular(self::$entity->getName(), NameArgument::Studly);
       $name = NameHelper::nameSingular(self::$entity->getName(), NameArgument::Lower);
-      $routeName = NameHelper::nameSingular(self::$entity->getName(), NameArgument::Lower);
+      $routeName = NameHelper::namePlural(self::$entity->getName(), NameArgument::Lower);
       $guestData = "\$guest{$nameStudy}";
 
       $content = <<< DESCRIBE
@@ -80,7 +80,7 @@ class TestKitProvider
    {
       $nameStudy = NameHelper::nameSingular(self::$entity->getName(), NameArgument::Studly);
       $name = NameHelper::nameSingular(self::$entity->getName(), NameArgument::Lower);
-      $routeName = NameHelper::nameSingular(self::$entity->getName(), NameArgument::Lower);
+      $routeName = NameHelper::namePlural(self::$entity->getName(), NameArgument::Lower);
       $guestData = "\$guest{$nameStudy}";
       $createdData = "\$created{$nameStudy}";
 
@@ -115,7 +115,7 @@ class TestKitProvider
       $nameStudys = NameHelper::namePlural(self::$entity->getName(), NameArgument::Studly);
       $name = NameHelper::nameSingular(self::$entity->getName(), NameArgument::Lower);
       $names = NameHelper::namePlural(self::$entity->getName(), NameArgument::Lower);
-      $routeName = NameHelper::nameSingular(self::$entity->getName(), NameArgument::Lower);
+      $routeName = NameHelper::namePlural(self::$entity->getName(), NameArgument::Lower);
       $createdDatas = "\$created{$nameStudys}";
       $structureName = "{$name}Structure";
 
@@ -167,7 +167,7 @@ class TestKitProvider
       $nameStudys = NameHelper::namePlural(self::$entity->getName(), NameArgument::Studly);
       $name = NameHelper::nameSingular(self::$entity->getName(), NameArgument::Lower);
       $names = NameHelper::namePlural(self::$entity->getName(), NameArgument::Lower);
-      $routeName = NameHelper::nameSingular(self::$entity->getName(), NameArgument::Lower);
+      $routeName = NameHelper::namePlural(self::$entity->getName(), NameArgument::Lower);
       $createdDatas = "\$created{$nameStudys}";
 
       $content = <<< DESCRIBE
@@ -187,7 +187,7 @@ class TestKitProvider
       $nameStudys = NameHelper::namePlural(self::$entity->getName(), NameArgument::Studly);
       $name = NameHelper::nameSingular(self::$entity->getName(), NameArgument::Lower);
       $names = NameHelper::namePlural(self::$entity->getName(), NameArgument::Lower);
-      $routeName = NameHelper::nameSingular(self::$entity->getName(), NameArgument::Lower);
+      $routeName = NameHelper::namePlural(self::$entity->getName(), NameArgument::Lower);
       $createdDatas = "\$created{$nameStudys}";
 
       $content = <<< DESCRIBE
