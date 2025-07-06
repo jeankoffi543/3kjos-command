@@ -42,7 +42,7 @@ class KjosMakeRouteApiCommand extends GeneratorCommand
     {--eh|errorhandler : Enable error handling mode}
     {--c|centralize : Enable centralize mode}
     {--factory : Generate factory for model}
-    {--endpoint_type=: the type of endpoint: group, standalone, apiResource, resource. default is group}
+    {--endpoint_type= : the type of endpoint: group, standalone, apiResource, resource. default is group}
     {--t|test : Generate tests for the api}';
 
     private ?array $runtimeDatas = [];

@@ -256,12 +256,15 @@ class RouteKitProvider
 
    private static function getEndpointType(): EndpointType
    {
-      return self::$command->options()['endpoint_type'] ?
-         EndpointType::tryFrom(self::$command->options()['endpoint_type']) : (
-            self::$config['route']['endpoint_type'] instanceof EndpointType ?
-            self::$config['route']['endpoint_type'] :
+      $optionEndpointType = data_get(self::$command->options(), 'endpoint_type');
+      $configEndpointType = data_get(self::$config['route'], 'endpoint_type');
+
+      return $optionEndpointType ?
+         EndpointType::tryFrom($optionEndpointType) : (
+            $configEndpointType instanceof EndpointType ?
+            $configEndpointType :
             EndpointType::tryFrom(
-               self::$config['route']['endpoint_type']
+               $configEndpointType
             )
          );
    }
