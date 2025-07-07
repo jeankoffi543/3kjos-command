@@ -54,7 +54,7 @@ class KjosMakeRouteApiCommand extends GeneratorCommand
             $path = new Path($this);
             $entity = new Entity($this->argument('name'));
             $question = new Questions($this);
-          
+
             if(! $response = $question->ask([])) {
                 $this->error('We cannot process your request, we don\'t have enough data.');
                 return Command::FAILURE;

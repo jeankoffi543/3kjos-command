@@ -60,7 +60,7 @@ trait InterractWithQuestions
 
 
       $type =  $this->command->anticipate(
-         'use arrow to select your database field type. Ex: string. Press [Enter] to skip or type \q.',
+         'use arrow to select your database field type. Ex: string. Press [Enter] to skip or type /q.',
          ColumnTypeEnum::values(),
          null
       );
@@ -83,7 +83,7 @@ trait InterractWithQuestions
    private function length(): ?int
    {
       if (in_array(ColumnTypeEnum::tryFrom($this->columnType), ColumnTypeEnum::withOption('length'))) {
-         $length = $this->stringQuestion('Enter the field length. Ex: 255. Press [Enter] to skip or type \q.', 'int');
+         $length = $this->stringQuestion('Enter the field length. Ex: 255. Press [Enter] to skip or type /q.', 'int');
          if ($this->columnType === 'string' && $length > 65535) {
             $this->command->error('The field length must be less than 65535');
             return $this->length();
@@ -116,7 +116,7 @@ trait InterractWithQuestions
    private function total(): ?int
    {
       if (in_array(ColumnTypeEnum::tryFrom($this->columnType), ColumnTypeEnum::withOption('total'))) {
-         $total = $this->stringQuestion('Enter the field total. Ex: 6. Press [Enter] to skip or type \q.', 'int');
+         $total = $this->stringQuestion('Enter the field total. Ex: 6. Press [Enter] to skip or type /q.', 'int');
          if ($this->skip($total)) {
             return null;
          }
@@ -128,7 +128,7 @@ trait InterractWithQuestions
    private function places(): ?int
    {
       if (in_array(ColumnTypeEnum::tryFrom($this->columnType), ColumnTypeEnum::withOption('places'))) {
-         $places = $this->stringQuestion('Enter the field places. Ex: 2. Press [Enter] to skip or type \q.', 'int');
+         $places = $this->stringQuestion('Enter the field places. Ex: 2. Press [Enter] to skip or type /q.', 'int');
          if ($this->skip($places)) {
             return null;
          }
@@ -140,7 +140,7 @@ trait InterractWithQuestions
    private function precision(): ?int
    {
       if (in_array(ColumnTypeEnum::tryFrom($this->columnType), ColumnTypeEnum::withOption('precision'))) {
-         $precision = $this->stringQuestion('Enter the field precision. Ex: 2. Press [Enter] to skip or type \q.', 'int');
+         $precision = $this->stringQuestion('Enter the field precision. Ex: 2. Press [Enter] to skip or type /q.', 'int');
          if ($this->skip($precision)) {
             return null;
          }
@@ -152,7 +152,7 @@ trait InterractWithQuestions
    private function enum(): ?array
    {
       if (in_array(ColumnTypeEnum::tryFrom($this->columnType), ColumnTypeEnum::withOption('enum'))) {
-         $enum = $this->arrayQuestion("Enter the enum field value, separated by commas. Ex: 1,2,3. Press [Enter] to skip or type \q.");
+         $enum = $this->arrayQuestion("Enter the enum field value, separated by commas. Ex: 1,2,3. Press [Enter] to skip or type /q.");
          if ($this->skip($enum)) {
             return [];
          }
@@ -164,7 +164,7 @@ trait InterractWithQuestions
    private function subtype(): ?int
    {
       if (in_array(ColumnTypeEnum::tryFrom($this->columnType), ColumnTypeEnum::withOption('subtype'))) {
-         $subtype = $this->command->ask('Enter the field subtype. Ex: 2. Press [Enter] to skip or type \q.', null);
+         $subtype = $this->command->ask('Enter the field subtype. Ex: 2. Press [Enter] to skip or type /q.', null);
          if ($this->skip($subtype)) {
             return null;
          }
@@ -187,7 +187,7 @@ trait InterractWithQuestions
    private function srid(): ?int
    {
       if (in_array(ColumnTypeEnum::tryFrom($this->columnType), ColumnTypeEnum::withOption('srid'))) {
-         $srid = $this->stringQuestion('Enter the field srid. Ex: 2. Press [Enter] to skip or type \q.', 'int');
+         $srid = $this->stringQuestion('Enter the field srid. Ex: 2. Press [Enter] to skip or type /q.', 'int');
          if ($this->skip($srid)) {
             return null;
          }
@@ -199,7 +199,7 @@ trait InterractWithQuestions
    private function dimensions(): ?int
    {
       if (in_array(ColumnTypeEnum::tryFrom($this->columnType), ColumnTypeEnum::withOption('dimensions'))) {
-         $dimensions = $this->stringQuestion('Enter the field dimensions. Ex: 2. Ex: 2. Press [Enter] to skip or type \q.', 'int');
+         $dimensions = $this->stringQuestion('Enter the field dimensions. Ex: 2. Ex: 2. Press [Enter] to skip or type /q.', 'int');
          if ($this->skip($dimensions)) {
             return null;
          }
@@ -210,7 +210,7 @@ trait InterractWithQuestions
 
    private function name(): ?string
    {
-      $name = $this->command->ask('Enter the field name. Ex: email <fg=red>[required]</>', null);
+      $name = $this->command->ask('Enter the field name. Ex: email <fg=red>[required]</>');
       if (empty($name) || ! kjos_is_string($name)) {
          $this->command->error("Invalid name: '{$name}', it must be a string");
          return $this->name();
@@ -258,11 +258,11 @@ trait InterractWithQuestions
       }
 
       $modifier = $this->command->anticipate(
-         'Use arrow to add a modifier (Ex: <fg=green>nullable</>). Press [Enter] to skip or type "\q".',
+         'Use arrow to add a modifier (Ex: <fg=green>nullable</>). Press [Enter] to skip or type "/q".',
          ColumnModifierEnum::values(),
          null
       );
-
+      
       // Cas "passer à la suite"
       if ($this->skip($modifier)) {
          return array_filter($modifiers);
@@ -398,7 +398,7 @@ trait InterractWithQuestions
             return $this->parseExpression(); // ici on retourne la récursion
          }
 
-         return new Expression($raw);
+         return $raw;
       }
    }
 
@@ -415,7 +415,7 @@ trait InterractWithQuestions
       }
 
       $value =  $this->command->anticipate(
-         'use arrow add a index to the field. Ex: <fg=green>unique</>. Press [Enter] to skip or type \q.',
+         'use arrow add a index to the field. Ex: <fg=green>unique</>. Press [Enter] to skip or type /q.',
          ColumnIndexEnum::values(),
          null
       );
@@ -457,7 +457,7 @@ trait InterractWithQuestions
          $op = match ($option) {
             'array' => function () use ($key, $value) {
                $response = $this->arrayQuestion(
-                  "Enter the <fg=blue>{$value}</> [<fg=red>{$key}</>] value, separated by commas. Ex: value1, value2, value3. Press [Enter] to skip or type \q. <fg=red>required</>"
+                  "Enter the <fg=blue>{$value}</> [<fg=red>{$key}</>] value, separated by commas. Ex: value1, value2, value3. Press [Enter] to skip or type /q. <fg=red>required</>"
                );
 
                if ($this->skip($response)) {
@@ -468,7 +468,7 @@ trait InterractWithQuestions
             },
             'array|string' => function () use ($key, $value) {
                $response = $this->arrayQuestion(
-                  "Enter the <fg=blue>{$value}</> [<fg=red>{$key}</>] value, For array: separated by commas or string one value. Ex: value1, value2, value3. Press [Enter] to skip or type \q. <fg=red>required</>",
+                  "Enter the <fg=blue>{$value}</> [<fg=red>{$key}</>] value, For array: separated by commas or string one value. Ex: value1, value2, value3. Press [Enter] to skip or type /q. <fg=red>required</>",
                   'string'
                );
 
@@ -481,11 +481,11 @@ trait InterractWithQuestions
 
             '?|array|string' => function () use ($key, $value) {
                $response = $this->arrayQuestion(
-                  "Enter the <fg=blue>{$value}</> [<fg=red>{$key}</>] value, For array: separated by commas or string one value. Ex: value1, value2, value3. Press [Enter] fo null or type \q for skip. <fg=red>required</>",
+                  "Enter the <fg=blue>{$value}</> [<fg=red>{$key}</>] value, For array: separated by commas or string one value. Ex: value1, value2, value3. Press [Enter] fo null or type /q for skip. <fg=red>required</>",
                   'string'
                );
 
-               if ($response === '\q') {
+               if ($response === '/q') {
                   return [];
                }
                if (empty($response)) {
@@ -497,7 +497,7 @@ trait InterractWithQuestions
 
             'string' => function () use ($key, $value, $values) {
                $response = $this->stringQuestion(
-                  "Enter the <fg=blue>{$value}</> [<fg=red>{$key}</>] value. Press [Enter] to skip or type \q. <fg=red>required</>",
+                  "Enter the <fg=blue>{$value}</> [<fg=red>{$key}</>] value. Press [Enter] to skip or type /q. <fg=red>required</>",
                   'string'
                );
                if (! $this->filterForeign($value, $values, $key)) return null;
@@ -511,7 +511,7 @@ trait InterractWithQuestions
 
             '?string' => function () use ($key, $value) {
                $response = $this->stringQuestion(
-                  "Enter the <fg=blue>{$value}</> [<fg=red>{$key}</>] value. Press [Enter] to skip or type \q.",
+                  "Enter the <fg=blue>{$value}</> [<fg=red>{$key}</>] value. Press [Enter] to skip or type /q.",
                   '?string'
                );
 
@@ -585,12 +585,12 @@ trait InterractWithQuestions
    private function skip(mixed $value): bool
    {
       if (is_array($value)) {
-         if (empty($value) || current($value) === '\q') {
+         if (empty($value) || current($value) === '/q') {
             $this->command->warn("<fg=red>[Skipped]</>");
             return true;
          }
       } else {
-         if (empty($value) || in_array(strtolower($value), ['\q'])) {
+         if (empty($value) || in_array(strtolower($value), ['/q'])) {
             $this->command->warn("<fg=red>[Skipped]</>");
             return true;
          }

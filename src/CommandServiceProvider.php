@@ -6,11 +6,6 @@ use Illuminate\Support\ServiceProvider;
 
 class CommandServiceProvider extends ServiceProvider
 {
-    protected $commands = [
-        'KjosMakeRouteApi' => \Kjos\Command\Commands\KjosMakeRouteApiCommand::class,
-        'KjosTestRouteApi' => \Kjos\Command\Commands\KjosTestRouteApiCommand::class,
-    ];
-
     public function boot()
     {
         // Load routes, views, migrations, etc.
@@ -24,22 +19,9 @@ class CommandServiceProvider extends ServiceProvider
         
         $this->app->bind(\Kjos\Command\Managers\Service::class);
 
-        // Register bindings, listeners, etc.
-        $this->registerCommands($this->commands);
-    }
-
-    protected function registerCommands(array $commands)
-    {
-        foreach ($commands as $commandName => $command) {
-            $method = "register{$commandName}Command";
-
-            if (method_exists($this, $method)) {
-                $this->{$method}();
-            } else {
-                $this->app->singleton($command);
-            }
-        }
-
-        $this->commands(array_values($commands));
+          $this->commands([
+           \Kjos\Command\Commands\KjosMakeRouteApiCommand::class,
+           \Kjos\Command\Commands\CleanupPublishedFilesCommand::class,
+        ]);
     }
 }

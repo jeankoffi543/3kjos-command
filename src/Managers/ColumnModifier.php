@@ -2,14 +2,12 @@
 
 namespace Kjos\Command\Managers;
 
-use Illuminate\Database\Query\Expression;
-
 class ColumnModifier
 {
    protected ?string $charset = null;
    protected ?string $collation = null;
    protected mixed $scalar = null;
-   protected ?Expression $expression = null;
+   protected ?string $expression = null;
    protected ?bool $boolean = null;
    protected ?string $novalue = null;
  
@@ -43,12 +41,12 @@ class ColumnModifier
       return $this->scalar;
    }
 
-   public function setExpression(?Expression $expression): static
+   public function setExpression(?string $expression): static
    {
       $this->expression = $expression;
       return $this;
    }
-   public function getExpression(): ?Expression
+   public function getExpression(): ?string
    {
       return $this->expression;
    }

@@ -2,13 +2,9 @@
 
 namespace Kjos\Command\Concerns;
 
-use Illuminate\Database\Eloquent\Relations\Relation;
-use Kjos\Command\Commands\KjosMakeRouteApiCommand;
 use Kjos\Command\Enums\NameArgument;
-use Kjos\Command\Managers\Entity;
 use ReflectionClass;
 use ReflectionMethod;
-use Illuminate\Support\Str;
 
 class DatasetKitProvider
 {
@@ -24,20 +20,14 @@ class DatasetKitProvider
    public static function genarateClassContent(): void
    {
       if (self::datasetExists()) {
-         self::$command->error('Migration already exists <fg=red> [skipped]</>');
+         self::$command->error('Dataset ' . self::$name . ' already exists <fg=red> [skipped]</>');
          return;
       }
-
-
-      // $relations = self::guessRelationMethods(self::getNamespace(self::$entity->getName()));
-      // if(empty($relations)) {
-      //    self::$command->warn('cannot create dataset for ' . self::$entity->getName() . ' because it has no relations or model not found <fg=red> [skipped]</>');
-      //    return;
-      // }
 
       $uses = self::useStatments(self::relations(self::$entity));
 
       $for = self::buildFor(self::relations(self::$entity));
+
       $name = self::$modelName;
       $datasetPlural = NameHelper::namePlural(self::$entity->getName(), NameArgument::Lower);
       $datasetSingular = NameHelper::namesingular(self::$entity->getName(), NameArgument::Lower);
@@ -132,6 +122,4 @@ class DatasetKitProvider
 
       return $methods;
    }
-
-
 }

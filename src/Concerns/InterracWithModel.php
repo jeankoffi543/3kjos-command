@@ -29,7 +29,7 @@ trait InterracWithModel
    }
 
 
-   public static function relations(Entity $entity): array
+   public static function relationsMethod(Entity $entity): array
    {
       $relations = [];
       $attributes = $entity->getAttributes();
@@ -62,7 +62,19 @@ trait InterracWithModel
             }
          }
       }
+
       return $relations;
+   }
+
+   public static function  columns(Entity $entity): array
+   {
+      $columns = [];
+      $attributs = $entity->getAttributes();
+      foreach ($attributs as $attribut) {
+         $columns[] = $attribut->getName();
+      }
+
+      return $columns;
    }
 
    public static function relationName(Entity $entity): array
@@ -73,10 +85,11 @@ trait InterracWithModel
    }
 
 
-   public static function generateRelationMethod(string $column, string $on, string $reference): string
+   public static function generateRelationMethod(?string $column, string $on, string $reference): string
    {
       $relationModelName = NameHelper::nameSingular($on, NameArgument::Studly);
       $relationName = NameHelper::nameSingular($on, NameArgument::Lower);
+      $column = $column ?? $reference;
       return "public function {$relationName}()
               {
                return \$this->belongsTo({$relationModelName}::class, '{$column}', '{$reference}');
@@ -100,5 +113,30 @@ trait InterracWithModel
          $use[] = "use {$medel}";
       }
       return implode(";\r\n", $use) . ";";
+   }
+
+   public static function relations(Entity $entity): array
+   {
+      $relations = [];
+      $attributes = $entity->getAttributes();
+
+      /**
+       * @var \Kjos\Command\Managers\Attribut $attribute
+       */
+      foreach ($attributes as $attribute) {
+         foreach ($attribute->getIndexes() as $index) {
+            /**
+             * @var \Kjos\Command\Managers\ColumnIndex $index
+             */
+            $method = data_get($index->toArray(), 'method');
+            $on = data_get($index->toArray(), 'options.on');
+
+            if ($method === 'foreign') {
+               $relations[] = NameHelper::nameSingular($on, NameArgument::Studly);              
+            }
+         }
+      }
+
+      return $relations;
    }
 }

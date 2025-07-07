@@ -57,7 +57,10 @@
     }
   },
   "scripts": {
-    "test": "vendor/bin/pest"
+    "test": "vendor/bin/pest",
+    "post-package-uninstall": [
+      "@php artisan kjos:vendor:cleanup"
+    ]
   },
   "require-dev": {
     "phpstan/phpstan": "^0.12",

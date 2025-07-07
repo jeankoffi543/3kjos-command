@@ -299,8 +299,10 @@ enum ColumnIndex: string
    public static function generateExistsRule(array $index, Attribut $attribute, string $name): string
    {
       $attributeName = trim($attribute->getName());
-      $name = $index['options']['on'] ?? $name;
-      $ref  = trim($index['options']['references']) ?? $attributeName;
+      // $name = $index['options']['on'] ?? $name;
+      // $ref  = trim($index['options']['references']) ?? $attributeName;
+      $name = trim(data_get($index, 'options.on')) ?? $name;
+      $ref  = trim(data_get($index, 'options.references')) ?? $attributeName;
 
       $columns = $index['options']['columns'] ?? [];
 
