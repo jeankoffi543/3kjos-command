@@ -31,7 +31,7 @@ class Questions
                ->setTotal($this->total())
                ->setPlaces($this->places())
                ->setPrecision($this->precision())
-               ->setEnum($this->enum())
+               ->setEnum($this->enum() ?? [])
                ->setSubtype($this->subtype())
                ->setSrid($this->srid())
                ->setDimensions($this->dimensions())

@@ -27,7 +27,9 @@ class TestQuestions
 
    public function ask(string $field): static
    {
-      $this->name($field)
+      $this
+         ->primaryKey()
+         ->name($field)
          ->type()
          ->length()
          ->fixed()
@@ -43,6 +45,24 @@ class TestQuestions
          ->indexes();
 
          return $this->addMoreQuestion($field);
+   }
+
+
+   public function name(string $name): static
+   {
+      $this->test->expectsQuestion('Enter the field name. Ex: email <fg=red>[required]</>', $name);
+      return $this;
+   }
+
+
+   private function primaryKey(): static
+   {
+      $primaryKey = $this->faker->word();
+      $this->test->expectsQuestion('Enter the primary key or type <fg=yellow>[enter]</> to use default. Ex: user_id', $primaryKey);
+      if (! empty($primaryKey) && ! is_string($primaryKey)) {
+         return $this->primaryKey();
+      }
+      return $this;
    }
 
    private function addMoreQuestion(string $field): static
@@ -151,13 +171,6 @@ class TestQuestions
       }
       return $this;
    }
-
-   public function name(string $name): static
-   {
-      $this->test->expectsQuestion('Enter the field name. Ex: email <fg=red>[required]</>', $name);
-      return $this;
-   }
-
 
    public function modifiers(): static
    {

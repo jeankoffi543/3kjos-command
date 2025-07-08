@@ -1,17 +1,27 @@
 <?php
 
-namespace Kjos\Command\Concerns;
+namespace Kjos\Command\Libs;
 
+use Kjos\Command\Concerns\Helpers\NameHelper;
+use Kjos\Command\Managers\Path;
 use Kjos\Command\Enums\ColumnType;
 use Kjos\Command\Enums\NameArgument;
+use Kjos\Command\Factories\BuilderFactory;
 use Kjos\Command\Managers\Entity;
 
 class FactoryKitProvider
 {
-   public static function definition(Entity $entity): string
+   private BuilderFactory $factory;
+
+   public function __construct(BuilderFactory $factory)
+   {
+      $this->factory = $factory;
+   }
+
+   public function definition(): string
    {
       $factories = [];
-      $attributes = $entity->getAttributes();
+      $attributes = $this->factory->entity->getAttributes();
 
       /**
        * @var \Kjos\Command\Managers\Attribut $attribute
@@ -35,7 +45,7 @@ class FactoryKitProvider
       FACTORY;
    }
 
-   public static function generateRelationMethod(string $column, string $on, string $reference): string
+   public function generateRelationMethod(string $column, string $on, string $reference): string
    {
       $relationModelName = NameHelper::nameSingular($on, NameArgument::Studly);
       $relationName = NameHelper::nameSingular($on, NameArgument::Lower);
@@ -46,10 +56,10 @@ class FactoryKitProvider
             ";
    }
 
-   public static function useStatments(Entity $entity): string
+   public function useStatments(): string
    {
       $path = new Path();
-      $nameStudySingular = NameHelper::nameSingular($entity->getName(), NameArgument::Studly);
+      $nameStudySingular = NameHelper::nameSingular($this->factory->entity->getName(), NameArgument::Studly);
       $model = $path->getAllNamspaces()["modelsPath"] . '\\' . $nameStudySingular;
       return "use Illuminate\Database\Eloquent\Factories\Factory
             use {$model}";

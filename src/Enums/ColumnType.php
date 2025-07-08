@@ -287,6 +287,10 @@ enum ColumnType: string
       $total = $attribute->getColumnType()->getTotal() ?? 8;
       $max = pow(10, $total - $places) - 1;
 
+      $enumValues = $attribute->getColumnType()->getEnum();
+      $enumCode = '[' . implode(', ', array_map(fn($v) => "'$v'", $enumValues)) . ']';
+
+
       $type = ($attribute->getName() === 'email' || $attribute->getName() === 'mail') ?
          'mail' : (
             ($attribute->getName() === 'password') ?
@@ -309,6 +313,8 @@ enum ColumnType: string
          self::UnsignedInteger, self::UnsignedBigInteger,
          self::UnsignedMediumInteger, self::UnsignedSmallInteger,
          self::UnsignedTinyInteger => "fake()->randomDigitNotNull()",
+
+         self::Enum, self::Set => "fake()->randomElement({$enumCode})",
 
          self::Decimal, self::Double, self::Float,
          self::UnsignedDecimal => "fake()->randomFloat({$places}, 0, {$max})",
@@ -363,13 +369,19 @@ enum ColumnType: string
       $precision = $precision ? ", {$precision}" : '';
 
       $enum = $attribute->getColumnType()->getEnum();
-      $enum = $enum ? ", {$enum}" : '';
+
+      $enum = empty($enum)
+         ? '[]'
+         : '[' . implode(', ', array_map(fn($v) => "'$v'", $enum)) . ']';
+
+      $enum = ", {$enum}";
 
       $srid = $attribute->getColumnType()->getSrid();
       $srid = $srid ? ", {$srid}" : '';
 
       $subtype = $attribute->getColumnType()->getSubtype();
       $subtype = $subtype ? ", {$subtype}" : '';
+
 
       return match ($type) {
          self::Binary => "->{$type->value}('{$attributeName}'{$length}{$fixed})",

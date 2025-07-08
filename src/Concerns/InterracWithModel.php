@@ -2,37 +2,17 @@
 
 namespace Kjos\Command\Concerns;
 
-use Kjos\Command\Commands\KjosMakeRouteApiCommand;
+use Kjos\Command\Concerns\Helpers\NameHelper;
 use Kjos\Command\Enums\NameArgument;
-use Kjos\Command\Managers\Entity;
 
 trait InterracWithModel
 {
-   protected static string $name = '';
-   protected static string $fileName  = '';
-   protected static string $modelName  = '';
-   protected static Entity $entity;
-   protected static string $path;
-   protected static Path $pathObject;
-   protected static KjosMakeRouteApiCommand $command;
-   protected static array $attributNames = [];
+   protected array $attributNames = [];
 
-   public static function init(Entity $entity, string $path, KjosMakeRouteApiCommand $command)
-   {
-      self::$entity = $entity;
-      self::$name = NameHelper::namePlural($entity->getName(), NameArgument::Studly);
-      self::$fileName = NameHelper::nameSingular($entity->getName(), NameArgument::Lower);
-      self::$modelName = NameHelper::nameSingular($entity->getName(), NameArgument::Studly);
-      self::$command = $command;
-      self::$path = $path;
-      self::$pathObject = new Path();
-   }
-
-
-   public static function relationsMethod(Entity $entity): array
+   public function relationsMethod(): array
    {
       $relations = [];
-      $attributes = $entity->getAttributes();
+      $attributes = $this->factory->entity->getAttributes();
 
       /**
        * @var \Kjos\Command\Managers\Attribut $attribute
@@ -49,14 +29,14 @@ trait InterracWithModel
             $on = data_get($index->toArray(), 'options.on');
 
             if ($method === 'foreign') {
-               $relationModelName = NameHelper::nameSingular($on, NameArgument::Studly);
+               $relationModelName = NameHelper::nameSingular($on, NameArgument::Lower);
                if ($options !== null) {
                   if ($columns !== null && is_array($columns)) {
                      foreach ($columns as $column) {
-                        $relations[$relationModelName] = self::generateRelationMethod($column, $on, $references);
+                        $relations[$relationModelName] = $this->generateRelationMethod($column, $on, $references);
                      }
                   } else {
-                     $relations[$relationModelName] = self::generateRelationMethod($columns, $on, $references);
+                     $relations[$relationModelName] = $this->generateRelationMethod($columns, $on, $references);
                   }
                }
             }
@@ -66,10 +46,10 @@ trait InterracWithModel
       return $relations;
    }
 
-   public static function  columns(Entity $entity): array
+   public function  columns(): array
    {
       $columns = [];
-      $attributs = $entity->getAttributes();
+      $attributs = $this->factory->entity->getAttributes();
       foreach ($attributs as $attribut) {
          $columns[] = $attribut->getName();
       }
@@ -77,7 +57,7 @@ trait InterracWithModel
       return $columns;
    }
 
-   public static function relationName(Entity $entity): array
+   public function relationName(): array
    {
       $relations = [];
 
@@ -85,7 +65,7 @@ trait InterracWithModel
    }
 
 
-   public static function generateRelationMethod(?string $column, string $on, string $reference): string
+   public function generateRelationMethod(?string $column, string $on, string $reference): string
    {
       $relationModelName = NameHelper::nameSingular($on, NameArgument::Studly);
       $relationName = NameHelper::nameSingular($on, NameArgument::Lower);
@@ -98,27 +78,27 @@ trait InterracWithModel
    }
 
 
-   private static function getNamespace(string $name, ?string $namePath = 'modelsPath'): string
+   private function getNamespace(string $name, ?string $namePath = 'modelsPath'): string
    {
       $name = NameHelper::nameSingular($name, NameArgument::Studly);
-      return self::$pathObject->getAllNamspaces()[$namePath] . '\\' . $name;
+      return $this->factory->getAllNamspaces()[$namePath] . '\\' . $name;
    }
 
-   private static function useStatments(array $relations): string
+   private function useStatments(array $relations): string
    {
-      $main = self::getNamespace(self::$entity->getName());
+      $main = $this->getNamespace($this->factory->entity->getName());
       $use = ["use {$main}"];
       foreach ($relations as $relation) {
-         $medel = self::getNamespace($relation);
+         $medel = $this->getNamespace($relation);
          $use[] = "use {$medel}";
       }
       return implode(";\r\n", $use) . ";";
    }
 
-   public static function relations(Entity $entity): array
+   public function relations(): array
    {
       $relations = [];
-      $attributes = $entity->getAttributes();
+      $attributes = $this->factory->entity->getAttributes();
 
       /**
        * @var \Kjos\Command\Managers\Attribut $attribute

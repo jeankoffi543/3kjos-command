@@ -2,110 +2,87 @@
 
 namespace Kjos\Command\Concerns;
 
-use Kjos\Command\Commands\KjosMakeRouteApiCommand;
-use Kjos\Command\Enums\NameArgument;
-
 trait InterraxtWithController
 {
-   private static array $config = [];
-   private static string $name = '';
-   private static KjosMakeRouteApiCommand $command;
-   public static string $nameLowerSingular = '';
-   public static string $nameStudySingular = '';
-   public static function init(string $name, KjosMakeRouteApiCommand $command): void
+   private function defaultIndex(): string
    {
-      // self::$config = $config;
-      self::$command = $command;
-      self::$name = $name;
-      self::$nameLowerSingular = NameHelper::nameSingular(self::$name, NameArgument::Lower);
-      self::$nameStudySingular = NameHelper::nameSingular(self::$name, NameArgument::Studly);
-   }
-
-   private static function defaultIndex(): string
-   {
-      $nameLowerSingular = self::$nameLowerSingular;
-      $nameStudySingular = self::$nameStudySingular;
       return <<<INDEX
       public function index(Request \$request): AnonymousResourceCollection
       {
         \$limit = \$request->query('limit', config('3kjos-command.route.pagination.limit'));
 
-        \${$nameLowerSingular}Query = {$nameStudySingular}::query();
+        \${$this->factory->getNameSingularLower()}Query = {$this->factory->getNameSingularStudly()}::query();
 
         /**
          * Paginate the results
          *
-         * @var \Illuminate\Database\Eloquent\Collection \${$nameLowerSingular}
+         * @var \Illuminate\Database\Eloquent\Collection \${$this->factory->getNameSingularLower()}
          */
-        \${$nameLowerSingular} = \${$nameLowerSingular}Query->paginate(\$limit);
+        \${$this->factory->getNameSingularLower()} = \${$this->factory->getNameSingularLower()}Query->paginate(\$limit);
 
-        return {$nameStudySingular}Resource::collection(\${$nameLowerSingular});
+        return {$this->factory->getNameSingularStudly()}Resource::collection(\${$this->factory->getNameSingularLower()});
       }
       INDEX;
    }
 
-   private static function centralizeAndErrorHandlerIndex(): string
+   private function centralizeAndErrorHandlerIndex(): string
    {
       return <<<INDEX
          public function index(Request \$request): AnonymousResourceCollection
          {
             return \$this->invokeWithCatching(function () {
-            return \$this->service::index();
+            return \$this->service->index();
          });
       }
       INDEX;
    }
 
-   private static function errorHandlerIndex(): string
+   private function errorHandlerIndex(): string
    {
-      $nameLowerSingular = self::$nameLowerSingular;
-      $nameStudySingular = self::$nameStudySingular;
       return <<<INDEX
          public function index(Request \$request): AnonymousResourceCollection
          {
             return \$this->invokeWithCatching(function () {
                \$limit = \$request->query('limit', config('3kjos-command.route.pagination.limit'));
 
-               \${$nameLowerSingular}Query = {$nameStudySingular}::query();
+               \${$this->factory->getNameSingularLower()}Query = {$this->factory->getNameSingularStudly()}::query();
 
                /**
                   * Paginate the results
                   *
-                  * @var \Illuminate\Database\Eloquent\Collection \${$nameLowerSingular}
+                  * @var \Illuminate\Database\Eloquent\Collection \${$this->factory->getNameSingularLower()}
                   */
-               \${$nameLowerSingular} = \${$nameLowerSingular}Query->paginate(\$limit);
+               \${$this->factory->getNameSingularLower()} = \${$this->factory->getNameSingularLower()}Query->paginate(\$limit);
 
-               return {$nameStudySingular}Resource::collection(\${$nameLowerSingular});
+               return {$this->factory->getNameSingularStudly()}Resource::collection(\${$this->factory->getNameSingularLower()});
          });
       }
       INDEX;
    }
 
-   private static function centralizeIndex(): string
+   private function centralizeIndex(): string
    {
       return <<<INDEX
          public function index(Request \$request): AnonymousResourceCollection
          {
-            return \$this->service::index();
+            return \$this->service->index();
          }
       INDEX;
    }
 
 
-   private static function defaultShow(): string
+   private function defaultShow(): string
    {
-      $nameLowerSingular = self::$nameLowerSingular;
-      $nameStudySingular = self::$nameStudySingular;
       return <<<SHOW
-         public function show(\$id): Response|{$nameStudySingular}Resource
+         public function show(\$id): Response|{$this->factory->getNameSingularStudly()}Resource
          {
             try {
-                  \${$nameLowerSingular} = {$nameStudySingular}::find(\$id);
-                  if (! \${$nameLowerSingular}) {
+                  \${$this->factory->getNameSingularLower()} = {$this->factory->getNameSingularStudly()}::find(\$id);
+                  if (! \${$this->factory->getNameSingularLower()}) {
                      return response('not_found', Response::HTTP_NOT_FOUND);
                   }
 
-                  return new {$nameStudySingular}Resource(\${$nameLowerSingular});
+                  return new {$this->factory->getNameSingularStudly()}Resource(\${$this->factory->getNameSingularLower()});
             } catch (\Exception \$e) {
                   return response('internal_server_error', Response::HTTP_INTERNAL_SERVER_ERROR);
             }
@@ -113,46 +90,42 @@ trait InterraxtWithController
       SHOW;
    }
 
-   private static function centralizeAndErrorHandlerShow(): string
+   private function centralizeAndErrorHandlerShow(): string
    {
-      $nameStudySingular = self::$nameStudySingular;
       return <<<SHOW
-         public function show(\$id): Response|{$nameStudySingular}Resource
+         public function show(\$id): Response|{$this->factory->getNameSingularStudly()}Resource
          {
             return \$this->invokeWithCatching(function () use (\$id) {
-                  return \$this->service::show(\$id);
+                  return \$this->service->show(\$id);
             });
          }
          SHOW;
    }
 
-   private static function errorHandlerShow(): string
+   private function errorHandlerShow(): string
    {
-      $nameLowerSingular = self::$nameLowerSingular;
-      $nameStudySingular = self::$nameStudySingular;
       return <<<SHOW
-         public function show(\$id): Response|{$nameStudySingular}Resource
+         public function show(\$id): Response|{$this->factory->getNameSingularStudly()}Resource
          {
             return \$this->invokeWithCatching(function () use (\$id) {
-                  \${$nameLowerSingular} = {$nameStudySingular}::find(\$id);
-                  if (! \${$nameLowerSingular}) {
+                  \${$this->factory->getNameSingularLower()} = {$this->factory->getNameSingularStudly()}::find(\$id);
+                  if (! \${$this->factory->getNameSingularLower()}) {
                      return response('not_found', Response::HTTP_NOT_FOUND);
                   }
 
-                  return new {$nameStudySingular}Resource(\${$nameLowerSingular});
+                  return new {$this->factory->getNameSingularStudly()}Resource(\${$this->factory->getNameSingularLower()});
             });
          }
       SHOW;
    }
 
-   private static function centralizeShow(): string
+   private function centralizeShow(): string
    {
-      $nameStudySingular = self::$nameStudySingular;
       return <<<SHOW
-         public function show(\$id): Response|{$nameStudySingular}Resource
+         public function show(\$id): Response|{$this->factory->getNameSingularStudly()}Resource
          {
             try {
-               return \$this->service::show(\$id);
+               return \$this->service->show(\$id);
             } catch (\Exception \$e) {
                   return response('internal_server_error', Response::HTTP_INTERNAL_SERVER_ERROR);
             }
@@ -161,14 +134,13 @@ trait InterraxtWithController
    }
 
 
-   private static function defaultStore(): string
+   private function defaultStore(): string
    {
-      $nameStudySingular = self::$nameStudySingular;
       return <<<STORE
-         public function store({$nameStudySingular}Request \$request): Response|{$nameStudySingular}Resource
+         public function store({$this->factory->getNameSingularStudly()}Request \$request): Response|{$this->factory->getNameSingularStudly()}Resource
          {
             try {
-               return new {$nameStudySingular}Resource({$nameStudySingular}::create(\$request->validated()));
+               return new {$this->factory->getNameSingularStudly()}Resource({$this->factory->getNameSingularStudly()}::create(\$request->validated()));
             } catch (\Exception \$e) {
                return response('internal_server_error', Response::HTTP_INTERNAL_SERVER_ERROR);
             }
@@ -176,40 +148,37 @@ trait InterraxtWithController
       STORE;
    }
 
-   private static function centralizeAndErrorHandlerStore(): string
+   private function centralizeAndErrorHandlerStore(): string
    {
-      $nameStudySingular = self::$nameStudySingular;
       return <<<STORE
-         public function store({$nameStudySingular}Request \$request): Response|{$nameStudySingular}Resource
+         public function store({$this->factory->getNameSingularStudly()}Request \$request): Response|{$this->factory->getNameSingularStudly()}Resource
          {
             return \$this->invokeWithCatching(function () use (\$request) {
-               return \$this->service::store(\$request->validated());
+               return \$this->service->store(\$request->validated());
             });
          }
       STORE;
    }
 
-   private static function errorHandlerStore(): string
+   private function errorHandlerStore(): string
    {
-      $nameStudySingular = self::$nameStudySingular;
       return <<<STORE
-         public function store({$nameStudySingular}Request \$request): Response|{$nameStudySingular}Resource
+         public function store({$this->factory->getNameSingularStudly()}Request \$request): Response|{$this->factory->getNameSingularStudly()}Resource
          {
             return \$this->invokeWithCatching(function () use (\$request) {
-               return new {$nameStudySingular}Resource({$nameStudySingular}::create(\$request->validated()));
+               return new {$this->factory->getNameSingularStudly()}Resource({$this->factory->getNameSingularStudly()}::create(\$request->validated()));
             });
          }
       STORE;
    }
 
-   private static function centralizeStore(): string
+   private function centralizeStore(): string
    {
-      $nameStudySingular = self::$nameStudySingular;
       return <<<STORE
-         public function store(\$id): Response|{$nameStudySingular}Resource
+         public function store(\$id): Response|{$this->factory->getNameSingularStudly()}Resource
          {
             try {
-               return \$this->service::store(\$request->validated());
+               return \$this->service->store(\$request->validated());
             } catch (\Exception \$e) {
                   return response('internal_server_error', Response::HTTP_INTERNAL_SERVER_ERROR);
             }
@@ -217,22 +186,20 @@ trait InterraxtWithController
       STORE;
    }
 
-   private static function defaultUpdate(): string
+   private function defaultUpdate(): string
    {
-      $nameLowerSingular = self::$nameLowerSingular;
-      $nameStudySingular = self::$nameStudySingular;
       return <<<UPDATE
-        public function update({$nameStudySingular}Request \$request, \$id): Response|{$nameStudySingular}Resource
+        public function update({$this->factory->getNameSingularStudly()}Request \$request, \$id): Response|{$this->factory->getNameSingularStudly()}Resource
         {
             try {
 
-               \${$nameLowerSingular} = {$nameStudySingular}::find(\$id);
-               if (! \${$nameLowerSingular}) {
+               \${$this->factory->getNameSingularLower()} = {$this->factory->getNameSingularStudly()}::find(\$id);
+               if (! \${$this->factory->getNameSingularLower()}) {
                   return response('not_found', Response::HTTP_NOT_FOUND);
                }
-               \${$nameLowerSingular}->update(\$request->validated());
+               \${$this->factory->getNameSingularLower()}->update(\$request->validated());
 
-               return new {$nameStudySingular}Resource(\${$nameLowerSingular});
+               return new {$this->factory->getNameSingularStudly()}Resource(\${$this->factory->getNameSingularLower()});
             } catch (\Exception \$e) {
                return response('internal_server_error', Response::HTTP_INTERNAL_SERVER_ERROR);
             }
@@ -240,11 +207,10 @@ trait InterraxtWithController
       UPDATE;
    }
 
-   private static function centralizeAndErrorHandlerUpdate(): string
+   private function centralizeAndErrorHandlerUpdate(): string
    {
-      $nameStudySingular = self::$nameStudySingular;
       return <<<UPDATE
-         public function update({$nameStudySingular}Request \$request, \$id): Response|{$nameStudySingular}Resource
+         public function update({$this->factory->getNameSingularStudly()}Request \$request, \$id): Response|{$this->factory->getNameSingularStudly()}Resource
          {
             return \$this->invokeWithCatching(function () use (\$request, \$id) {
                   return \$this->service->update(\$id, \$request->validated());
@@ -254,32 +220,29 @@ trait InterraxtWithController
       UPDATE;
    }
 
-   private static function errorHandlerUpdate(): string
+   private function errorHandlerUpdate(): string
    {
-      $nameStudySingular = self::$nameStudySingular;
-      $nameLowerSingular = self::$nameLowerSingular;
       return <<<UPDATE
-         public function update({$nameStudySingular}Request \$request): Response|{$nameStudySingular}Resource
+         public function update({$this->factory->getNameSingularStudly()}Request \$request): Response|{$this->factory->getNameSingularStudly()}Resource
          {
             return \$this->invokeWithCatching(function () use (\$request) {
                
-               \${$nameLowerSingular} = {$nameStudySingular}::find(\$id);
-               if (! \${$nameLowerSingular}) {
+               \${$this->factory->getNameSingularLower()} = {$this->factory->getNameSingularStudly()}::find(\$id);
+               if (! \${$this->factory->getNameSingularLower()}) {
                   return response('not_found', Response::HTTP_NOT_FOUND);
                }
-               \${$nameLowerSingular}->update(\$request->validated());
+               \${$this->factory->getNameSingularLower()}->update(\$request->validated());
 
-               return new {$nameStudySingular}Resource(\${$nameLowerSingular});
+               return new {$this->factory->getNameSingularStudly()}Resource(\${$this->factory->getNameSingularLower()});
             });
          }
          UPDATE;
    }
 
-   private static function centralizeUpdate(): string
+   private function centralizeUpdate(): string
    {
-      $nameStudySingular = self::$nameStudySingular;
       return <<<UPDATE
-        public function update({$nameStudySingular}Request \$request, \$id): Response|{$nameStudySingular}Resource
+        public function update({$this->factory->getNameSingularStudly()}Request \$request, \$id): Response|{$this->factory->getNameSingularStudly()}Resource
          {
             try {
                return \$this->service->update(\$id, \$request->validated());
@@ -290,19 +253,17 @@ trait InterraxtWithController
       UPDATE;
    }
 
-   private static function defaultDestroy(): string
+   private function defaultDestroy(): string
    {
-      $nameLowerSingular = self::$nameLowerSingular;
-      $nameStudySingular = self::$nameStudySingular;
       return <<<UPDATE
-         public function destroy(\$id): Response|{$nameStudySingular}Resource
+         public function destroy(\$id): Response|{$this->factory->getNameSingularStudly()}Resource
          {
             try {
-                  \${$nameLowerSingular} = {$nameStudySingular}::find(\$id);
-                  if (! \${$nameLowerSingular}) {
+                  \${$this->factory->getNameSingularLower()} = {$this->factory->getNameSingularStudly()}::find(\$id);
+                  if (! \${$this->factory->getNameSingularLower()}) {
                      return response('not_found', Response::HTTP_NOT_FOUND);
                   }
-                  \${$nameLowerSingular}->delete();
+                  \${$this->factory->getNameSingularLower()}->delete();
             } catch (\Exception \$e) {
                   return response('internal_server_error', Response::HTTP_INTERNAL_SERVER_ERROR);
             }
@@ -310,11 +271,10 @@ trait InterraxtWithController
       UPDATE;
    }
 
-   private static function centralizeAndErrorHandlerDestroy(): string
+   private function centralizeAndErrorHandlerDestroy(): string
    {
-      $nameStudySingular = self::$nameStudySingular;
       return <<<UPDATE
-         public function destroy(\$id): Response|{$nameStudySingular}Resource
+         public function destroy(\$id): Response|{$this->factory->getNameSingularStudly()}Resource
          {
             return \$this->invokeWithCatching(function () use (\$request, \$id) {
                   return \$this->service->destroy(\$id);
@@ -324,30 +284,27 @@ trait InterraxtWithController
       UPDATE;
    }
 
-   private static function errorHandlerDestroy(): string
+   private function errorHandlerDestroy(): string
    {
-      $nameStudySingular = self::$nameStudySingular;
-      $nameLowerSingular = self::$nameLowerSingular;
       return <<<UPDATE
-         public function destroy(\$id): Response|{$nameStudySingular}Resource
+         public function destroy(\$id): Response|{$this->factory->getNameSingularStudly()}Resource
          {
             return \$this->invokeWithCatching(function () use (\$request) {
                
-               \${$nameLowerSingular} = {$nameStudySingular}::find(\$id);
-               if (! \${$nameLowerSingular}) {
+               \${$this->factory->getNameSingularLower()} = {$this->factory->getNameSingularStudly()}::find(\$id);
+               if (! \${$this->factory->getNameSingularLower()}) {
                   return response('not_found', Response::HTTP_NOT_FOUND);
                }
-               \${$nameLowerSingular}->delete();
+               \${$this->factory->getNameSingularLower()}->delete();
             });
          }
          UPDATE;
    }
 
-   private static function centralizeDestroy(): string
+   private function centralizeDestroy(): string
    {
-      $nameStudySingular = self::$nameStudySingular;
       return <<<UPDATE
-        public function destroy(\$id): Response|{$nameStudySingular}Resource
+        public function destroy(\$id): Response|{$this->factory->getNameSingularStudly()}Resource
          {
             try {
                return \$this->service->destroy(\$id);
