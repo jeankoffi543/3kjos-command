@@ -9,12 +9,22 @@ use Kjos\Command\Enums\ColumnModifier as ColumnModifierEnum;
 use Kjos\Command\Enums\ColumnType as ColumnTypeEnum;
 use Kjos\Command\Enums\ColumnIndex as ColumnIndexEnum;
 use Kjos\Command\Enums\SpatialSubtype;
-use Kjos\Command\Managers\Attribut;
 use Kjos\Command\Managers\ColumnIndex;
 use Kjos\Command\Managers\ColumnModifier;
 
 trait InterractWithQuestions
 {
+
+   private function name(): ?string
+   {
+      $name = $this->command->ask('Enter the field name. Ex: email <fg=red>[required]</>');
+      if (empty($name) || ! kjos_is_string($name)) {
+         $this->command->error("Invalid name: '{$name}', it must be a string");
+         return $this->name();
+      }
+      return $name;
+   }
+
    private function addMoreQuestion(array $attributs = []): mixed
    {
       $this->command->newLine(2);
@@ -154,7 +164,7 @@ trait InterractWithQuestions
       if (in_array(ColumnTypeEnum::tryFrom($this->columnType), ColumnTypeEnum::withOption('enum'))) {
          $enum = $this->arrayQuestion("Enter the enum field value, separated by commas. Ex: 1,2,3. Press [Enter] to skip or type /q.");
          if ($this->skip($enum)) {
-            return [];
+            return null;
          }
          return $enum;
       }
@@ -208,15 +218,6 @@ trait InterractWithQuestions
       return null;
    }
 
-   private function name(): ?string
-   {
-      $name = $this->command->ask('Enter the field name. Ex: email <fg=red>[required]</>');
-      if (empty($name) || ! kjos_is_string($name)) {
-         $this->command->error("Invalid name: '{$name}', it must be a string");
-         return $this->name();
-      }
-      return $name;
-   }
 
    /**
     * Checks if any of the given attributes is a ColumnType.
@@ -262,7 +263,7 @@ trait InterractWithQuestions
          ColumnModifierEnum::values(),
          null
       );
-      
+
       // Cas "passer à la suite"
       if ($this->skip($modifier)) {
          return array_filter($modifiers);

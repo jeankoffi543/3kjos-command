@@ -1,56 +1,38 @@
 <?php
 
-namespace Kjos\Command\Concerns;
+namespace Kjos\Command\Libs;
 
-use Kjos\Command\Commands\KjosMakeRouteApiCommand;
 use Kjos\Command\Enums\ColumnIndex;
 use Kjos\Command\Enums\ColumnModifier;
 use Kjos\Command\Enums\ColumnType;
-use Kjos\Command\Enums\NameArgument;
-use Kjos\Command\Managers\Entity;
+use Kjos\Command\Factories\BuilderFactory;
 
 class MigrationKitProvider
 {
-   protected static string $tableName = '';
    protected static string $fileName  = '';
-   protected static Entity $entity;
-   protected static string $path;
-   protected static KjosMakeRouteApiCommand $command;
-   private static array $schema = [];
+   private array $schema = [];
+   private BuilderFactory $factory;
 
-//    private const NONCHAINABLE = [
-//     'foreign',          // à utiliser séparément
-//     'renameIndex',
-//     'dropPrimary',
-//     'dropUnique',
-//     'dropIndex',
-//     'dropFullText',
-//     'dropSpatialIndex',
-//     'dropForeign',
-// ];
-
-   public static function init(Entity $entity, string $path, KjosMakeRouteApiCommand $command)
+   public function __construct(BuilderFactory $factory)
    {
-      self::$entity = $entity;
-      self::$tableName = NameHelper::namePlural($entity->getName(), NameArgument::Lower);
-      self::$fileName = NameHelper::nameSingular($entity->getName(), NameArgument::Lower);
-      self::$command = $command;
-      self::$path = $path;
-   }
-   public static function genarateFileName(): string
-   {
-      return now()->format('Y_m_d_His') . '_create_' . self::$tableName . '.php';
+      $this->factory = $factory;
    }
 
-   public static function genarateClassContent(): void
+   public function genarateFileName(): string
    {
-      if (self::migrationExists()) {
-         self::$command->error('Migration already exists <fg=red> [skipped]</>');
+      return now()->format('Y_m_d_His') . '_create_' . $this->factory->getTable() . '.php';
+   }
+
+   public function genarateClassContent(): void
+   {
+      if ($this->migrationExists()) {
+         $this->factory->command->error('Migration already exists <fg=red> [skipped]</>');
          return;
       }
-      $schema = self::schemaMethods()::build();
+      $schema = $this->schemaMethods()::build();
 
-      $tableName = self::$tableName;
+      $tableName = $this->factory->getTable();
+      $tableId = $this->factory->entity->getPrimaryKey() ? "'{$this->factory->entity->getPrimaryKey()}'" : '';
       $content = <<< DESCRIBE
          <?php
          use Illuminate\Database\Migrations\Migration;
@@ -67,7 +49,7 @@ class MigrationKitProvider
             public function up(): void
             {
                Schema::create('{$tableName}', function (Blueprint \$table) {
-                     \$table->id();
+                     \$table->id({$tableId});
                      {$schema}
                      \$table->timestamps();
                });
@@ -85,21 +67,21 @@ class MigrationKitProvider
          };
       DESCRIBE;
 
-      $path = self::$path . '/' . self::genarateFileName();
+      $path = $this->factory->path . '/' . $this->genarateFileName();
       file_put_contents($path, $content);
       exec("./vendor/bin/pint {$path}", $output, $status);
    }
 
-   private static function getSchema(): string
+   private function getSchema(): string
    {
-      return implode(PHP_EOL, self::schemaToArray());
+      return implode(PHP_EOL, $this->schemaToArray());
    }
 
-   private static function schemaToArray(): array
+   private function schemaToArray(): array
    {
       $schemas = [];
 
-      foreach (self::$entity->getAttributes() as $attribute) {
+      foreach ($this->factory->entity->getAttributes() as $attribute) {
          $column = ColumnType::schema($attribute);       // ->unsignedBigInteger('user_id')
          $modifier = ColumnModifier::schema($attribute); // ->nullable()
          $index = ColumnIndex::schema($attribute);       // ->foreign('user_id')->references('id')->on('users')
@@ -122,19 +104,19 @@ class MigrationKitProvider
       return $schemas;
    }
 
-   private static function schemaMethods(): static
+   private function schemaMethods(): static
    {
-      self::$schema = collect(self::schemaToArray())->mapWithKeys(function ($schema, $key) {
+      $this->schema = collect($this->schemaToArray())->mapWithKeys(function ($schema, $key) {
          $s = preg_split('/->/', preg_replace('/\$table->/', '', trim($schema, ';')));
          return [
-            "line-{$key}" => self::filterSchemaLine(self::schemoToDetails($s)),
+            "line-{$key}" => $this->filterSchemaLine($this->schemoToDetails($s)),
          ];
       })->toArray();
 
-        return new static();
+        return $this;
    }
 
-   private static function filterSchemaLine(array $line): array
+   private function filterSchemaLine(array $line): array
    {
       $seen = [];
 
@@ -148,7 +130,7 @@ class MigrationKitProvider
       })->toArray();
    }
 
-   private static function schemoToDetails(array $schema): array
+   private function schemoToDetails(array $schema): array
    {
       return collect($schema)->mapWithKeys(function ($item, $key) {
          preg_match('/(\w+)(\()(.*)(\))/', $item, $matches);
@@ -164,9 +146,9 @@ class MigrationKitProvider
       })->toArray();
    }
 
-   private static function build(): string
+   private function build(): string
    {
-      $schema = collect(self::$schema)->map(function ($items) {
+      $schema = collect($this->schema)->map(function ($items) {
          $methods = collect($items)->map(fn($i) => $i['method'])->toArray();
          $methods = implode('->', $methods);
          return "\$table->{$methods};";
@@ -175,8 +157,8 @@ class MigrationKitProvider
       return implode(PHP_EOL, $schema);
    }
 
-   private static function migrationExists(): bool
+   private function migrationExists(): bool
    {
-      return file_exists(self::$path . '/' . self::genarateFileName());
+      return file_exists($this->factory->path . '/' . $this->genarateFileName());
    }
 }

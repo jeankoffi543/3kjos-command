@@ -1,6 +1,6 @@
 <?php
 
-namespace Kjos\Command\Concerns;
+namespace Kjos\Command\Factories;
 
 use Kjos\Command\Commands\KjosMakeRouteApiCommand;
 
@@ -17,23 +17,21 @@ class PhpBodyFactory
    protected ?string $traits = null;
    protected ?string $routeGroup = null;
    protected array $content = [];
-   protected ?KjosMakeRouteApiCommand $command = null;
-   protected string $path = '';
+   protected BuilderFactory $builderFactory;
 
-   public function __construct(array $content = [], ?KjosMakeRouteApiCommand $command = null, string $path = '')
+   public function __construct(array $content = [], BuilderFactory $builderFactory)
    {
-      $this->path = $path;
       $this->constructor = '';
       $this->extends = null;
       $this->implements = null;
       $this->traits = null;
       $this->body = '';
       $this->content = $content;
-      $this->command = $command;
       $this->classDeclaration = $content['declaration'] ?? '';
       $this->traits = $content['traits'] ?? '';
       $this->properties = $content['properties'] ?? '';
       $this->methods = $content['full_methods'] ?? '';
+      $this->builderFactory = $builderFactory;
    }
 
    public function addClassDeclaration(?string $classDeclaration = null): static
@@ -49,13 +47,13 @@ class PhpBodyFactory
 
    public function addTraits(?string $traits = null): static
    {
-      $path = kjos_get_namespace($this->path);
+      $path = kjos_get_namespace($this->builderFactory->getPath());
       $exists = false;
       if (isset($this->content['traits_to_array'])) {
          foreach ($this->content['traits_to_array'] as $t) {
             if ($t === trim($traits)) {
                $exists = true;
-               $this->command->warn("[Warning] Property {$t}: already exists in {$path} <fg=red>[skipped]</>");
+               $this->builderFactory->command->warn("[Warning] Property {$t}: already exists in {$path} <fg=red>[skipped]</>");
                break;
             }
          }
@@ -73,13 +71,13 @@ class PhpBodyFactory
 
    public function addProperties(?string $properties = null, ?string $name = null): static
    {
-      $path = kjos_get_namespace($this->path);
+      $path = kjos_get_namespace($this->builderFactory->getPath());
       $exists = false;
       if (isset($this->content['properties_to_array'])) {
          foreach ($this->content['properties_to_array'] as $m) {
             if ($name === $m['name']) {
                $exists = true;
-               $this->command->warn("[Warning] Property {$name}: already exists in {$path} <fg=red>[skipped]</>");
+               $this->builderFactory->command->warn("[Warning] Property {$name}: already exists in {$path} <fg=red>[skipped]</>");
                break;
             }
          }
@@ -97,13 +95,13 @@ class PhpBodyFactory
 
    public function addMethods(?string $methods = null, string $name = ''): static
    {
-      $path = kjos_get_namespace($this->path);
+      $path = kjos_get_namespace($this->builderFactory->getPath());
       $exists = false;
       if (isset($this->content['methods'])) {
          foreach ($this->content['methods'] as $m) {
             if ($name === $m['name']) {
                $exists = true;
-               $this->command->warn("[Warning] Method {$name}: already exists in {$path} <fg=red>[skipped]</>");
+               $this->builderFactory->command->warn("[Warning] Method {$name}: already exists in {$path} <fg=red>[skipped]</>");
                break;
             }
          }

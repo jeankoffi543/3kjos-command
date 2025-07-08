@@ -1,15 +1,14 @@
 <?php
 
-namespace Kjos\Command\Concerns;
+namespace Kjos\Command\Factories;
 
 use Illuminate\Support\Facades\File;
-use Kjos\Command\Commands\KjosMakeRouteApiCommand;
+use Kjos\Command\Concerns\InterractWithFileContent;
 
 class FileFactory
 {
    use InterractWithFileContent;
 
-   protected string $path;
    protected ?string $namespace = null;
    protected ?PhpBodyFactory $phpBodyFactory = null;
    protected ?string $useStatements = null;
@@ -18,26 +17,21 @@ class FileFactory
    protected string $endTage = '';
    protected array $imports = [];
    protected string $fileContent = '';
-   protected array $config = [];
-   protected KjosMakeRouteApiCommand $command;
+   protected BuilderFactory $factory;
 
-   public function __construct(string $path, KjosMakeRouteApiCommand $command)
+   public function __construct(BuilderFactory $factory)
    {
-      $this->command = $command;
-      $this->config = kjos_get_config();
-      // init config for interracting with file content
-      $this->initConfig($this->config, $this->command);
+      $this->factory = $factory;
       // set file path
-      $this->path = $path;
 
       // create file if not exists
-      kjos_create_file($path);
+      kjos_create_file($this->factory->path);
 
       // now get file content
-      $this->fileContent = kjos_get_file_content($this->path);
+      $this->fileContent = kjos_get_file_content($this->factory->path);
 
       // set php body factory
-      $this->phpBodyFactory = new PhpBodyFactory( $this->parseContent(), $this->command, $this->path);
+      $this->phpBodyFactory = new PhpBodyFactory( $this->parseContent(), $this->factory);
 
    }
 
@@ -91,8 +85,8 @@ class FileFactory
 
    public function save(): void
    {
-      File::put($this->path, $this->get());
-      exec("./vendor/bin/pint {$this->path}", $output, $status);
+      File::put($this->factory->path, $this->get());
+      exec("./vendor/bin/pint {$this->factory->path}", $output, $status);
    }
 
    public function getFileContent(): string

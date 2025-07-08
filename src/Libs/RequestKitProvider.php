@@ -1,15 +1,22 @@
 <?php
 
-namespace Kjos\Command\Concerns;
+namespace Kjos\Command\Libs;
 
 use Kjos\Command\Enums\ColumnIndex;
 use Kjos\Command\Enums\ColumnModifier;
 use Kjos\Command\Enums\ColumnType;
-use Kjos\Command\Managers\Entity;
+use Kjos\Command\Factories\BuilderFactory;
 
 class RequestKitProvider
 {
-   public static function authorize(): string
+   private BuilderFactory $factory;
+
+   public function __construct(BuilderFactory $factory)
+   {
+      $this->factory = $factory;
+   }
+
+   public function authorize(): string
    {
       return <<<REQUEST
             public function authorize()
@@ -19,7 +26,7 @@ class RequestKitProvider
          REQUEST;
    }
 
-   public static function failedValidation(): string
+   public function failedValidation(): string
    {
       return <<<REQUEST
          /**
@@ -38,10 +45,10 @@ class RequestKitProvider
          REQUEST;
    }
 
-   public static function rules(Entity $entity): string
+   public function rules(): string
    {
       $rules = [];
-      $attributes = $entity->getAttributes();
+      $attributes = $this->factory->entity->getAttributes();
 
       /** @var \Kjos\Command\Managers\Attribut $attribute */
       foreach ($attributes as $attribute) {
@@ -58,7 +65,7 @@ class RequestKitProvider
 
          // Règles à partir des indexes
          foreach ($attribute->getIndexes() as $index) {
-            $allRules[] = ColumnIndex::rules($entity->getName(), $attribute, $index->toArray());
+            $allRules[] = ColumnIndex::rules($this->factory->entity->getName(), $attribute, $index->toArray());
          }
 
          // Exploser, nettoyer, filtrer les doublons
@@ -102,7 +109,7 @@ class RequestKitProvider
          REQUEST;
    }
 
-   public static function prepareForValidation(): string
+   public function prepareForValidation(): string
    {
       return <<<REQUEST
            public function prepareForValidation()

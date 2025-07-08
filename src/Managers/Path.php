@@ -1,9 +1,6 @@
 <?php
 
-namespace Kjos\Command\Concerns;
-
-use Illuminate\Console\OutputStyle;
-use Kjos\Command\Commands\KjosMakeRouteApiCommand;
+namespace Kjos\Command\Managers;
 
 class Path
 {
@@ -24,12 +21,11 @@ class Path
    protected ?string $datasetsPath;
    protected ?string $namespaceRoot;
    protected ?array $namespaces = [];
-   protected ?KjosMakeRouteApiCommand $command = null;
+   public array $config = [];
 
 
-   public function __construct(?KjosMakeRouteApiCommand $command = null)
+   public function __construct()
    {
-      $this->command = $command;
       $this->intit();
    }
 
@@ -116,16 +112,10 @@ class Path
 
    private function intit()
    {
-      $this->checkIfInstalled();
       $this->initPaths();
+      $this->config = config('3kjos-command');
    }
 
-   private function checkIfInstalled()
-   {
-      if (! config('3kjos-command')) {
-         throw new \Exception('3kjos-command is not installed: run -> php artisan vendor:publish --tag=3kjos-command');
-      }
-   }
 
    public function getAllNamspaces(): array
    {

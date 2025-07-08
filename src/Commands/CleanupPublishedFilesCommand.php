@@ -16,6 +16,7 @@ class CleanupPublishedFilesCommand extends Command
         try {
          if(File::exists($path = config_path('3kjos-command.php'))) {
             File::delete($path);
+            // kjos_remove_test_directory();
          }
         } catch (\Exception $e) {
         }

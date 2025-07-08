@@ -1,6 +1,6 @@
 <?php
 
-namespace Kjos\Command\Concerns;
+namespace Kjos\Command\Concerns\Helpers;
 
 use Illuminate\Support\Str;
 use Kjos\Command\Enums\NameArgument;

@@ -32,9 +32,6 @@ return [
          'limit' => 10,
       ]
    ],
-   'resource' => [
-      'use_id' => false,
-   ],
 
    'tests' => [
       'dataset' => [

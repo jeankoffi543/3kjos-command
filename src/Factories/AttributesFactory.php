@@ -1,6 +1,6 @@
 <?php
 
-namespace Kjos\Command\Concerns;
+namespace Kjos\Command\Factories;
 
 class AttributesFactory
 {

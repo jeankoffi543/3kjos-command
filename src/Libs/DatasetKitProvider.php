@@ -1,8 +1,11 @@
 <?php
 
-namespace Kjos\Command\Concerns;
+namespace Kjos\Command\Libs;
 
+use Kjos\Command\Concerns\InterracWithModel;
+use Kjos\Command\Concerns\Helpers\NameHelper;
 use Kjos\Command\Enums\NameArgument;
+use Kjos\Command\Factories\BuilderFactory;
 use ReflectionClass;
 use ReflectionMethod;
 
@@ -10,64 +13,66 @@ class DatasetKitProvider
 {
    use InterracWithModel;
 
+   private BuilderFactory $factory;
 
-
-   public static function genarateFileName(): string
+   public function __construct(BuilderFactory $factory)
    {
-      return self::$name . '.php';
+      $this->factory = $factory;
    }
 
-   public static function genarateClassContent(): void
+
+   public function genarateFileName(): string
    {
-      if (self::datasetExists()) {
-         self::$command->error('Dataset ' . self::$name . ' already exists <fg=red> [skipped]</>');
+      return $this->factory->getDatasetName() . '.php';
+   }
+
+   public function genarateClassContent(): void
+   {
+      if ($this->datasetExists()) {
+         $this->factory->command->error('Dataset ' . $this->factory->getDatasetName() . ' already exists <fg=red> [skipped]</>');
          return;
       }
 
-      $uses = self::useStatments(self::relations(self::$entity));
+      $uses = $this->useStatments($this->relations($this->factory->entity));
 
-      $for = self::buildFor(self::relations(self::$entity));
+      $for = $this->buildFor($this->relations($this->factory->entity));
 
-      $name = self::$modelName;
-      $datasetPlural = NameHelper::namePlural(self::$entity->getName(), NameArgument::Lower);
-      $datasetSingular = NameHelper::namesingular(self::$entity->getName(), NameArgument::Lower);
       $limit = config('3kjos-command.tests.dataset.create_many_limit', 5);
       $content = <<< DESCRIBE
          <?php
          
          {$uses}
          
-         dataset('created {$datasetSingular}', [
-            fn () => {$name}::factory()
+         dataset('created {$this->factory->getNameSingularLower()}', [
+            fn () => {$this->factory->getModelName()}::factory()
                {$for}
                ->createOne(),
          ]);
 
-         dataset('created {$datasetPlural}', [
-            fn () => {$name}::factory()
+         dataset('created {$this->factory->getNamePluralLower()}', [
+            fn () => {$this->factory->getModelName()}::factory()
                {$for}
                ->createMany({$limit}),
          ]);
 
-         dataset('guest {$datasetSingular}', [
-            fn () => {$name}::factory()
+         dataset('guest {$this->factory->getNameSingularLower()}', [
+            fn () => {$this->factory->getModelName()}::factory()
                {$for}
                ->makeOne(),
          ]);
 
       DESCRIBE;
-      $path = self::$path;
-      file_put_contents($path, $content);
-      exec("./vendor/bin/pint {$path}", $output, $status);
+      file_put_contents($this->factory->path, $content);
+      exec("./vendor/bin/pint {$this->factory->path}", $output, $status);
    }
 
 
-   private static function datasetExists(): bool
+   private function datasetExists(): bool
    {
-      return file_exists(self::$path . '/' . self::genarateFileName());
+      return file_exists($this->factory->path . '/' . $this->genarateFileName());
    }
 
-   private static function buildFor(array $relations): string
+   private function buildFor(array $relations): string
    {
       $relation_ = [];
       foreach ($relations as $relation) {
@@ -77,7 +82,7 @@ class DatasetKitProvider
       return implode('', $relation_);
    }
 
-   private static function guessRelationMethods($modelClass): array
+   private function guessRelationMethods($modelClass): array
    {
       try {
          $reflection = new \ReflectionClass($modelClass);
