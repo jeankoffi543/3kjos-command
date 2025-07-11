@@ -322,7 +322,7 @@ enum ColumnType: string
          self::Boolean => "fake()->randomElement([true, false])",
          self::String, self::Char, self::Binary => "fake()->word({$length})",
          self::Text, self::MediumText,
-         self::LongText, self::TinyText => "fake()->randomAscii(10)",
+         self::LongText, self::TinyText => "fake()->text()",
 
          self::Date => "fake()->date()",
          self::Year => "fake()->year()",
