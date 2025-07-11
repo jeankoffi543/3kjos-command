@@ -30,7 +30,7 @@ class FactoryFactory extends BuilderFactory
 
       // file php body
       $phpBodyFactory = new PhpBodyFactory($this->fileFactory->parseContent(), $this);
-      $phpBodyFactory->addClassDeclaration("class {$this->getFactoryName()} extends Factory")
+      $phpBodyFactory->addClassDeclaration($this->getClassDeclaration())
          ->addProperties("protected \$model = {$this->getModelName()}::class;", 'model')
          ->addMethods($factoryKitProvider->definition(), "definition");
 
@@ -39,5 +39,14 @@ class FactoryFactory extends BuilderFactory
          ->addUseStatements($factoryKitProvider->useStatments())
          ->addBody($phpBodyFactory)
          ->save();
+   }
+
+
+   private function getClassDeclaration(): string
+   {
+      return <<<CLASS
+         /** @extends Factory<{$this->getModelName()}> */         
+         class {$this->getFactoryName()} extends Factory
+      CLASS;
    }
 }

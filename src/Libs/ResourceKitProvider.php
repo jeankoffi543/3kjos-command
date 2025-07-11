@@ -26,6 +26,12 @@ class ResourceKitProvider
       $resource = implode(",\n", $resource);
 
       return <<<RESOURCE
+            /**
+             * Transform the resource into an array.
+            *
+            * @param  \Illuminate\Http\Request  \$request
+            * @return array<string, mixed>
+            */
             public function toArray(Request \$request): array
             {
                return [

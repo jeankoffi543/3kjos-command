@@ -19,7 +19,12 @@ class ModeltKitProvider
    public function newFactory(): string
    {
       return <<<REQUEST
-            protected static function newFactory()
+            /**
+             * Create a new factory instance for the model.
+            *
+            * @return {$this->factory->getFactoryName()}
+            */
+            protected static function newFactory(): {$this->factory->getFactoryName()}
             {
                return {$this->factory->getFactoryName()}::new();
             }
