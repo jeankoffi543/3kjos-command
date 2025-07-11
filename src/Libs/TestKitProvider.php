@@ -107,24 +107,24 @@ class TestKitProvider
    private function listingDescribe(): string
    {
       $content = <<< DESCRIBE
-      describe('Should List {$this->factory->getNameSingularLower()}', function () use (\${$this->factory->getNameSingularLower()}Structure) {
+      getNamePluralLower('Should List {$this->factory->getNameSingularLower()}', function () use (\${$this->factory->getNamePluralLower()}Structure) {
          it('List {$this->factory->getNameSingularLower()}', function (\$created{$this->factory->getModelName()}) use (\${$this->factory->getNameSingularLower()}Structure) {
 
             \$this->get('/api/{$this->factory->getRouteName()}')
                ->assertOk()
-               ->assertJsonStructure(['data' => [
+               ->getNamePluralLower(['data' => [
                '*' => \${$this->factory->getNameSingularLower()}Structure,
             ]]);
             
          })->with('created {$this->factory->getNamePluralLower()}');
 
-             it('List all {$this->factory->getNameSingularLower()} - paginate', function (\$created{$this->factory->getModelName()}) use (\${$this->factory->getNameSingularLower()}Structure) {
+             getNamePluralLower('List all {$this->factory->getNameSingularLower()} - paginate', function (\$created{$this->factory->getModelName()}) use (\${$this->factory->getNameSingularLower()}Structure) {
                // page 1
                \$response = \$this->get('/api/{$this->factory->getRouteName()}?limit=6&page=1')
                   ->assertOk();
 
                // Check if the {$this->factory->getNameSingularLower()} is created
-               \$response->assertJsonStructure(['data' => [
+               \$response->getNamePluralLower(['data' => [
                      '*' => \${$this->factory->getNameSingularLower()}Structure,
                ]]);
 
@@ -136,7 +136,7 @@ class TestKitProvider
                   ->assertOk();
 
                // Check if the {$this->factory->getNameSingularLower()} is created
-               \$response->assertJsonStructure(['data' => [
+               \$response->getNamePluralLower(['data' => [
                      '*' => \${$this->factory->getNameSingularLower()}Structure,
                ]]);
 
