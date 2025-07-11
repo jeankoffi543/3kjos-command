@@ -74,7 +74,7 @@ trait InterraxtWithController
    private function defaultShow(): string
    {
       return <<<SHOW
-         public function show(\$id): Response|{$this->factory->getNameSingularStudly()}Resource
+         public function show(int \$id): Response|{$this->factory->getNameSingularStudly()}Resource
          {
             try {
                   \${$this->factory->getNameSingularLower()} = {$this->factory->getNameSingularStudly()}::find(\$id);
@@ -93,7 +93,7 @@ trait InterraxtWithController
    private function centralizeAndErrorHandlerShow(): string
    {
       return <<<SHOW
-         public function show(\$id): Response|{$this->factory->getNameSingularStudly()}Resource
+         public function show(int \$id): Response|{$this->factory->getNameSingularStudly()}Resource
          {
             return \$this->invokeWithCatching(function () use (\$id) {
                   return \$this->service->show(\$id);
@@ -105,7 +105,7 @@ trait InterraxtWithController
    private function errorHandlerShow(): string
    {
       return <<<SHOW
-         public function show(\$id): Response|{$this->factory->getNameSingularStudly()}Resource
+         public function show(int \$id): Response|{$this->factory->getNameSingularStudly()}Resource
          {
             return \$this->invokeWithCatching(function () use (\$id) {
                   \${$this->factory->getNameSingularLower()} = {$this->factory->getNameSingularStudly()}::find(\$id);
@@ -122,7 +122,7 @@ trait InterraxtWithController
    private function centralizeShow(): string
    {
       return <<<SHOW
-         public function show(\$id): Response|{$this->factory->getNameSingularStudly()}Resource
+         public function show(int \$id): Response|{$this->factory->getNameSingularStudly()}Resource
          {
             try {
                return \$this->service->show(\$id);
@@ -189,7 +189,7 @@ trait InterraxtWithController
    private function defaultUpdate(): string
    {
       return <<<UPDATE
-        public function update({$this->factory->getNameSingularStudly()}Request \$request, \$id): Response|{$this->factory->getNameSingularStudly()}Resource
+        public function update({$this->factory->getNameSingularStudly()}Request \$request, int \$id): Response|{$this->factory->getNameSingularStudly()}Resource
         {
             try {
 
@@ -210,7 +210,7 @@ trait InterraxtWithController
    private function centralizeAndErrorHandlerUpdate(): string
    {
       return <<<UPDATE
-         public function update({$this->factory->getNameSingularStudly()}Request \$request, \$id): Response|{$this->factory->getNameSingularStudly()}Resource
+         public function update({$this->factory->getNameSingularStudly()}Request \$request, int \$id): Response|{$this->factory->getNameSingularStudly()}Resource
          {
             return \$this->invokeWithCatching(function () use (\$request, \$id) {
                   return \$this->service->update(\$id, \$request->validated());
@@ -223,9 +223,9 @@ trait InterraxtWithController
    private function errorHandlerUpdate(): string
    {
       return <<<UPDATE
-         public function update({$this->factory->getNameSingularStudly()}Request \$request): Response|{$this->factory->getNameSingularStudly()}Resource
+         public function update({$this->factory->getNameSingularStudly()}Request \$request, int \$id): Response|{$this->factory->getNameSingularStudly()}Resource
          {
-            return \$this->invokeWithCatching(function () use (\$request) {
+            return \$this->invokeWithCatching(function () use (\$request, \$id) {
                
                \${$this->factory->getNameSingularLower()} = {$this->factory->getNameSingularStudly()}::find(\$id);
                if (! \${$this->factory->getNameSingularLower()}) {
@@ -242,7 +242,7 @@ trait InterraxtWithController
    private function centralizeUpdate(): string
    {
       return <<<UPDATE
-        public function update({$this->factory->getNameSingularStudly()}Request \$request, \$id): Response|{$this->factory->getNameSingularStudly()}Resource
+        public function update({$this->factory->getNameSingularStudly()}Request \$request, int \$id): Response|{$this->factory->getNameSingularStudly()}Resource
          {
             try {
                return \$this->service->update(\$id, \$request->validated());
@@ -256,7 +256,7 @@ trait InterraxtWithController
    private function defaultDestroy(): string
    {
       return <<<UPDATE
-         public function destroy(\$id): Response|{$this->factory->getNameSingularStudly()}Resource
+         public function destroy(int \$id): Response|{$this->factory->getNameSingularStudly()}Resource
          {
             try {
                   \${$this->factory->getNameSingularLower()} = {$this->factory->getNameSingularStudly()}::find(\$id);
@@ -274,7 +274,7 @@ trait InterraxtWithController
    private function centralizeAndErrorHandlerDestroy(): string
    {
       return <<<UPDATE
-         public function destroy(\$id): Response|{$this->factory->getNameSingularStudly()}Resource
+         public function destroy(int \$id): Response|{$this->factory->getNameSingularStudly()}Resource
          {
             return \$this->invokeWithCatching(function () use (\$request, \$id) {
                   return \$this->service->destroy(\$id);
@@ -287,9 +287,9 @@ trait InterraxtWithController
    private function errorHandlerDestroy(): string
    {
       return <<<UPDATE
-         public function destroy(\$id): Response|{$this->factory->getNameSingularStudly()}Resource
+         public function destroy(int \$id): Response|{$this->factory->getNameSingularStudly()}Resource
          {
-            return \$this->invokeWithCatching(function () use (\$request) {
+            return \$this->invokeWithCatching(function () use (\$request, \$id) {
                
                \${$this->factory->getNameSingularLower()} = {$this->factory->getNameSingularStudly()}::find(\$id);
                if (! \${$this->factory->getNameSingularLower()}) {
@@ -304,7 +304,7 @@ trait InterraxtWithController
    private function centralizeDestroy(): string
    {
       return <<<UPDATE
-        public function destroy(\$id): Response|{$this->factory->getNameSingularStudly()}Resource
+        public function destroy(int \$id): Response|{$this->factory->getNameSingularStudly()}Resource
          {
             try {
                return \$this->service->destroy(\$id);

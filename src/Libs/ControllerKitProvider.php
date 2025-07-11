@@ -45,6 +45,12 @@ class ControllerKitProvider
          )
       ) {
          return <<<SERVICE
+
+            /**
+             * Retrieve the list of services associated with the {$this->factory->getControllerName()}.
+            *
+            * @return array<string, string> An associative array mapping service names to their respective class.
+            */
             public function getServices(): array
             {
                return [

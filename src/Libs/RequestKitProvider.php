@@ -29,10 +29,19 @@ class RequestKitProvider
    public function failedValidation(): string
    {
       return <<<REQUEST
-         /**
-         * @return mixed
-         */
-         public function failedValidation(Validator \$validator)
+          /**
+          * Handle a failed validation attempt.
+          *
+          * If the validation fails and the current request is an X-Inertia request,
+          * we will throw a HttpResponseException. Otherwise, we will return
+          * a JSON response with errors.
+          *
+          * @param  \Illuminate\Contracts\Validation\Validator  \$validator
+          * @return void
+          *
+          * @throws \Illuminate\Http\Exceptions\HttpResponseException
+          */
+         public function failedValidation(Validator \$validator): void
          {
             if (boolval(request()->headers->get("x-inertia")) === false) {
                throw new HttpResponseException(
@@ -88,8 +97,8 @@ class RequestKitProvider
 
       return <<<REQUEST
             /**
-          * @return string[]
-          */
+            * @return string<string, array<int, string>>
+            */
             public function rules(): array
             {
                if (\$this->isMethod(FormRequest::METHOD_GET)) {

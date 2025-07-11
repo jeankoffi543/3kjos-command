@@ -320,7 +320,8 @@ enum ColumnType: string
          self::UnsignedDecimal => "fake()->randomFloat({$places}, 0, {$max})",
 
          self::Boolean => "fake()->randomElement([true, false])",
-         self::String, self::Char, self::Binary => "fake()->word({$length})",
+         self::String => "fake()->text({$length})",
+         self::Char, self::Binary => "fake()->word()",
          self::Text, self::MediumText,
          self::LongText, self::TinyText => "fake()->text()",
 

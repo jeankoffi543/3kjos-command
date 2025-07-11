@@ -30,7 +30,7 @@ class ModelFactory extends BuilderFactory
       // file php body
       $phpBodyFactory = new PhpBodyFactory($this->fileFactory->parseContent(), $this);
       $phpBodyFactory->addClassDeclaration("class {$this->getModelName()} extends Model")
-         ->addTraits("use HasFactory;");
+         ->addTraits($this->getTratit());
          if($this->entity->getPrimaryKey()) {
             $phpBodyFactory->addProperties("protected \$primaryKey = '{$this->entity->getPrimaryKey()}';", 'primaryKey');
          }
@@ -47,5 +47,13 @@ class ModelFactory extends BuilderFactory
          ->addUseStatements($modeltKitProvider->useStatments())
          ->addBody($phpBodyFactory)
          ->save();
+   }
+
+   private function getTratit(): string
+   {
+      return <<<CLASS
+         /** @use HasFactory<{$this->getFactoryName()}>  */
+         use HasFactory;
+      CLASS;
    }
 }
