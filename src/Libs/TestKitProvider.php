@@ -107,25 +107,25 @@ class TestKitProvider
    private function listingDescribe(): string
    {
       $content = <<< DESCRIBE
-      getNamePluralLower('Should List {$this->factory->getNameSingularLower()}', function () use (\${$this->factory->getNamePluralLower()}Structure) {
-         it('List {$this->factory->getNameSingularLower()}', function (\$created{$this->factory->getModelName()}) use (\${$this->factory->getNameSingularLower()}Structure) {
+      describe('Should List {$this->factory->getNameSingularLower()}', function () use (\${$this->factory->getNamePluralLower()}Structure) {
+         it('List {$this->factory->getNameSingularLower()}', function (\$created{$this->factory->getModelName()}) use (\${$this->factory->getNamePluralLower()}Structure) {
 
             \$this->get('/api/{$this->factory->getRouteName()}')
                ->assertOk()
-               ->getNamePluralLower(['data' => [
-               '*' => \${$this->factory->getNameSingularLower()}Structure,
+               ->assertJsonStructure(['data' => [
+               '*' => \${$this->factory->getNamePluralLower()}Structure,
             ]]);
             
          })->with('created {$this->factory->getNamePluralLower()}');
 
-             getNamePluralLower('List all {$this->factory->getNameSingularLower()} - paginate', function (\$created{$this->factory->getModelName()}) use (\${$this->factory->getNameSingularLower()}Structure) {
+             describe('List all {$this->factory->getNameSingularLower()} - paginate', function (\$created{$this->factory->getModelName()}) use (\${$this->factory->getNamePluralLower()}Structure) {
                // page 1
                \$response = \$this->get('/api/{$this->factory->getRouteName()}?limit=6&page=1')
                   ->assertOk();
 
                // Check if the {$this->factory->getNameSingularLower()} is created
-               \$response->getNamePluralLower(['data' => [
-                     '*' => \${$this->factory->getNameSingularLower()}Structure,
+               \$response->assertJsonStructure(['data' => [
+                     '*' => \${$this->factory->getNamePluralLower()}Structure,
                ]]);
 
                // Count created {$this->factory->getNameSingularLower()} to be (6)
@@ -136,8 +136,8 @@ class TestKitProvider
                   ->assertOk();
 
                // Check if the {$this->factory->getNameSingularLower()} is created
-               \$response->getNamePluralLower(['data' => [
-                     '*' => \${$this->factory->getNameSingularLower()}Structure,
+               \$response->assertJsonStructure(['data' => [
+                     '*' => \${$this->factory->getNamePluralLower()}Structure,
                ]]);
 
                // Count created {$this->factory->getNameSingularLower()} to be (6)

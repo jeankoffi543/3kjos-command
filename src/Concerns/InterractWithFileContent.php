@@ -73,7 +73,7 @@ trait InterractWithFileContent
 
    public function buildControllerDefinition(string $name): ?array
    {
-      $controllerNamespace = kjos_get_namespace($this->factory->getControllersPath()) . '\\' . Str::studly($name) . 'Controller';
+      $controllerNamespace = kjos_get_namespace($this->factory->getControllersPath()) . '\\' . Str::singular(Str::studly($name)) . 'Controller';
       $defaultRoute = [
          [
             'method' => 'get',
