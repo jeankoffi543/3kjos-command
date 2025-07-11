@@ -27,8 +27,8 @@ class ServiceFactory extends BuilderFactory
       // file php body
       $phpBodyFactory = new PhpBodyFactory($this->fileFactory->parseContent(), $this);
       $phpBodyFactory->addClassDeclaration("class {$this->getServiceName()} extends BaseService")
-         ->addProperties("protected string \$model = {$this->getModelName()}::class;", 'model')
-         ->addProperties("protected string \$resource = {$this->getResourceName()}::class;", 'resource');
+         ->addProperties("protected \$model = {$this->getModelName()}::class;", 'model')
+         ->addProperties("protected \$resource = {$this->getResourceName()}::class;", 'resource');
 
       $this->fileFactory
          ->addNamespace("namespace {$this->getAllNamspaces()['servicesPath']}")

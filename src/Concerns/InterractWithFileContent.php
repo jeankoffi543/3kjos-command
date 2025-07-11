@@ -184,6 +184,7 @@ trait InterractWithFileContent
 
    public function parseRouteGroup(string $name): string
    {
+      $name = Str::plural($name);
       return  $this->extracRouteGroup($this->fileContent, $name);
    }
 
@@ -202,6 +203,7 @@ trait InterractWithFileContent
 
    public function extracRouteGroup(string &$fileContent, string $name): string
    {
+
       // 1. Capturer les groupes
       $existingGroups = $this->captureRouteGroup($fileContent);
 
