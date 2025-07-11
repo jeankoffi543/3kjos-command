@@ -21,7 +21,6 @@ class ModeltKitProvider
       return <<<REQUEST
             /**
              * Create a new factory instance for the model.
-            *
             * @return {$this->factory->getFactoryName()}
             */
             protected static function newFactory(): {$this->factory->getFactoryName()}

@@ -19,7 +19,12 @@ class RequestKitProvider
    public function authorize(): string
    {
       return <<<REQUEST
-            public function authorize()
+           /**
+            * Determine if the user is authorized to make this request.
+            *
+            * @return bool
+            */
+            public function authorize(): bool
             {
                return true;
             }
@@ -97,7 +102,7 @@ class RequestKitProvider
 
       return <<<REQUEST
             /**
-            * @return string<string, array<int, string>>
+            * @return array<string, array<int, string>>
             */
             public function rules(): array
             {
