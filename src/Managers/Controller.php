@@ -38,13 +38,10 @@ abstract class Controller extends \Illuminate\Routing\Controller
             }
             return $callback ? $callback($c) : $c;
         } catch (ModelNotFoundException $e) {
-            dump($e);
             return response('not_found', Response::HTTP_NOT_FOUND);
         } catch (QueryException $e) {
-            dump($e);
             return response('not_found', Response::HTTP_NOT_FOUND);
         } catch (\Exception $e) {
-            // dump($e);
             if ($this->isApiRequest()) {
 
                 if ($e->getCode() === 404) {
