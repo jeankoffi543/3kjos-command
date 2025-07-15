@@ -22,7 +22,7 @@ class Service
     protected $relations = [];
 
     /**
-     * @param  mixed  $model
+     * @param  mixed $model
      * @return \Illuminate\Http\Resources\Json\JsonResource
      */
     public function resource($model)
