@@ -36,24 +36,30 @@ abstract class Controller extends \Illuminate\Routing\Controller
             if ($this->isApiRequest()) {
                 return $c;
             }
-
             return $callback ? $callback($c) : $c;
         } catch (ModelNotFoundException $e) {
+            dump($e);
             return response('not_found', Response::HTTP_NOT_FOUND);
         } catch (QueryException $e) {
+            dump($e);
             return response('not_found', Response::HTTP_NOT_FOUND);
         } catch (\Exception $e) {
-            if ($e->getCode() === 404) {
-                return response('not_found', Response::HTTP_NOT_FOUND);
-            }
-            if ($e->getCode() === 403) {
-                return response($e->getMessage(), Response::HTTP_FORBIDDEN);
-            }
-            if ($e->getCode() === 422) {
-                return response($e->getMessage(), Response::HTTP_FORBIDDEN);
-            }
+            // dump($e);
+            if ($this->isApiRequest()) {
 
-            return response($e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
+                if ($e->getCode() === 404) {
+                    return response('not_found', Response::HTTP_NOT_FOUND);
+                }
+                if ($e->getCode() === 403) {
+                    return response($e->getMessage(), Response::HTTP_FORBIDDEN);
+                }
+                if ($e->getCode() === 422) {
+                    return response($e->getMessage(), Response::HTTP_FORBIDDEN);
+                }
+
+                return response($e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
+            }
+            throw $e; // Très important pour que Inertia fonctionne
         }
     }
 
