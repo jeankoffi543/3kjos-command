@@ -2,9 +2,11 @@
 
 namespace Kjos\Command\Managers;
 
+use Closure;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Route;
 
 abstract class Controller extends \Illuminate\Routing\Controller
 {
@@ -27,10 +29,15 @@ abstract class Controller extends \Illuminate\Routing\Controller
         }
     }
 
-    protected function invokeWithCatching(\Closure $callable)
+    protected function invokeWithCatching(\Closure $callable, ?Closure $callback = null): mixed
     {
         try {
-            return $callable();
+            $c = $callable();
+            if ($this->isApiRequest()) {
+                return $c;
+            }
+
+            return $callback ? $callback($c) : $c;
         } catch (ModelNotFoundException $e) {
             return response('not_found', Response::HTTP_NOT_FOUND);
         } catch (QueryException $e) {
@@ -48,5 +55,13 @@ abstract class Controller extends \Illuminate\Routing\Controller
 
             return response($e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
+    }
+
+    protected function isApiRequest(): bool
+    {
+        $request = request();
+        return $request->expectsJson()
+            || $request->is('api/*')
+            || str_starts_with(Route::currentRouteName() ?? '', 'api.');
     }
 }
