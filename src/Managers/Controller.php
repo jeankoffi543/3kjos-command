@@ -38,12 +38,20 @@ abstract class Controller extends \Illuminate\Routing\Controller
             }
             return $callback ? $callback($c) : $c;
         } catch (ModelNotFoundException $e) {
-            return response('not_found', Response::HTTP_NOT_FOUND);
+            if ($this->isApiRequest()) {
+                return response('not_found', Response::HTTP_NOT_FOUND);
+            }
+            throw $e; // Très important pour que Inertia fonctionne
+
         } catch (QueryException $e) {
+            if ($this->isApiRequest()) {
+                return response('not_found', Response::HTTP_NOT_FOUND);
+            }
+            throw $e; // Très important pour que Inertia fonctionne
+
             return response('not_found', Response::HTTP_NOT_FOUND);
         } catch (\Exception $e) {
             if ($this->isApiRequest()) {
-
                 if ($e->getCode() === 404) {
                     return response('not_found', Response::HTTP_NOT_FOUND);
                 }
