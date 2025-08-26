@@ -21,6 +21,14 @@ class Service
     /** @var array<string> $relations */
     protected $relations = [];
 
+    protected function model(): string
+    {
+        return '';
+    }
+
+    /** @var array<string, mixed> $dispatchEvents */
+    protected $dispatchEvents = [];
+
     /**
      * @param  mixed $model
      * @return \Illuminate\Http\Resources\Json\JsonResource
@@ -57,6 +65,7 @@ class Service
         $limit = $limit > 0 ? request()->integer('limit') : config('3kjos-command.route.pagination.limit', 10);
         $query = call_user_func([$this->model, 'query']);
         $query = $query->paginate($limit);
+
         return $this->resourcesCollection($query);
     }
 
@@ -82,7 +91,11 @@ class Service
      */
     public function store(array $data): \Illuminate\Http\Resources\Json\JsonResource
     {
-        return $this->resource($this->model::create($data));
+        $model = $this->model::create($data);
+        if (!empty($this->dispatchEvents) && $event = data_get($this->dispatchEvents, 'created', null)) {
+            $event::dispatch($model);
+        }
+        return $this->resource($model);
     }
 
     public function update(int $id, array $data): \Illuminate\Http\Resources\Json\JsonResource
@@ -90,6 +103,9 @@ class Service
         $model = $this->model::findOrFail($id);
         if (count($data)) {
             $model->update($data);
+            if (!empty($this->dispatchEvents) && $event = data_get($this->dispatchEvents, 'updated', null)) {
+                $event::dispatch($model);
+            }
         }
         return $this->resource($model);
     }
@@ -106,6 +122,9 @@ class Service
 
         if ($model) {
             $model->delete();
+            if (!empty($this->dispatchEvents) && $event = data_get($this->dispatchEvents, 'deleted', null)) {
+                $event::dispatch($id);
+            }
         }
 
         return response('success', Response::HTTP_OK);
@@ -131,7 +150,7 @@ class Service
      * The key of the file in the $data array is determined by the $fileKey parameter.
      * If the $fileKey parameter is not given, the key will be 'image'.
      */
-   public function saveFile($data, $path = null, $update = false, $fileKey = 'image', $model = null): array
+    public function saveFile($data, $path = null, $update = false, $fileKey = 'image', $model = null): array
     {
         $file = data_get($data, $fileKey);
 
