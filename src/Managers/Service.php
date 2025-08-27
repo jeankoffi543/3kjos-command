@@ -30,6 +30,19 @@ class Service
     protected $dispatchEvents = [];
 
     /**
+     * Triggered after a resource is deleted.
+     *
+     * @param mixed $model The model that was deleted.
+     *
+     * @return mixed
+     */
+    protected function deleted($model): mixed
+    {
+        return '';
+    }
+
+
+    /**
      * @param  mixed $model
      * @return \Illuminate\Http\Resources\Json\JsonResource
      */
@@ -123,7 +136,7 @@ class Service
         if ($model) {
             $model->delete();
             if (!empty($this->dispatchEvents) && $event = data_get($this->dispatchEvents, 'deleted', null)) {
-                $event::dispatch($id);
+                $event::dispatch($id, $this->deleted($model));
             }
         }
 
