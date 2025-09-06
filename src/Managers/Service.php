@@ -104,7 +104,7 @@ class Service
      */
     public function store(array $data): \Illuminate\Http\Resources\Json\JsonResource
     {
-        $model = $this->model::create($data);
+        $model = $this->model::create($this->saveFile($data));
         if (!empty($this->dispatchEvents) && $event = data_get($this->dispatchEvents, 'created', null)) {
             $event::dispatch($model);
         }
@@ -115,7 +115,7 @@ class Service
     {
         $model = $this->model::findOrFail($id);
         if (count($data)) {
-            $model->update($data);
+            $model->update($this->saveFile($data, true, $model));
             if (!empty($this->dispatchEvents) && $event = data_get($this->dispatchEvents, 'updated', null)) {
                 $event::dispatch($model);
             }
@@ -134,6 +134,9 @@ class Service
         $model = call_user_func([$this->model, 'find'], (int) $id);
 
         if ($model) {
+            if ($model->{$this->fileKey()}) {
+                Storage::delete($model->{$this->fileKey()});
+            }
             $model->delete();
             if (!empty($this->dispatchEvents) && $event = data_get($this->dispatchEvents, 'deleted', null)) {
                 $event::dispatch($id, $this->deleted($model));
@@ -147,7 +150,7 @@ class Service
      * @param array $data
      * @param null $path
      * @param bool $update
-     * @param string $fileKey
+     * @param string $this->fileKey()
      * @param null $model
      * @return array<mixed>
      */
@@ -160,26 +163,47 @@ class Service
      * If the $update parameter is true and the $model parameter is given, the file will be updated.
      * If the $update parameter is false, a new file will be created.
      *
-     * The key of the file in the $data array is determined by the $fileKey parameter.
-     * If the $fileKey parameter is not given, the key will be 'image'.
+     * The key of the file in the $data array is determined by the $this->fileKey() parameter.
+     * If the $this->fileKey() parameter is not given, the key will be 'image'.
      */
-    public function saveFile($data, $path = null, $update = false, $fileKey = 'image', $model = null): array
+    public function saveFile($data, $update = false, $model = null): array
     {
-        $file = data_get($data, $fileKey);
+        $file = data_get($data, $this->fileKey());
 
         if (! $file instanceof UploadedFile) {
-            $data[$fileKey] = $file;
+            $data[$this->fileKey()] = $file;
             return $data;
         }
 
         if ($update && $model) {
-            Storage::delete($model->{$fileKey});
+            Storage::delete($model->{$this->fileKey()});
         }
 
-        $path = $path ?? 'tenants/images'; // ← dossier relatif dans storage/app
         $fileName = Str::ulid() . '.' . $file->getClientOriginalExtension();
-        $data[$fileKey] = $file->storeAs($path, $fileName);
+        $data[$this->fileKey()] = $file->storeAs($this->filePath(), $fileName);
 
         return $data;
+    }
+
+    /**
+     * Return the key of the file in the $data array.
+     *
+     * If not overridden, the key will be 'image'.
+     *
+     * @return string The key of the file in the $data array
+     */
+    public function fileKey(): string
+    {
+        return 'image';
+    }
+
+    /**
+     * Return the path where the file will be saved.
+     *
+     * @return string The path where the file will be saved
+     */
+    public function filePath(): string
+    {
+        return 'image';
     }
 }
