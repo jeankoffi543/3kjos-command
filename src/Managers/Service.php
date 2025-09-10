@@ -21,7 +21,12 @@ class Service
     /** @var array<string> $relations */
     protected $relations = [];
 
-    protected function model(): string
+    protected function model(mixed $mixed = null): string
+    {
+        return '';
+    }
+
+    protected function resource(mixed $mixed = null): string
     {
         return '';
     }
@@ -46,9 +51,9 @@ class Service
      * @param  mixed $model
      * @return \Illuminate\Http\Resources\Json\JsonResource
      */
-    public function resource($model)
+    public function resources($model)
     {
-        return $this->resource::make($model);
+        return ($this->resource ?? $this->resource())::make($model);
     }
 
     /**
@@ -57,7 +62,7 @@ class Service
      */
     public function resourcesCollection($resource)
     {
-        return $this->resource::collection($resource);
+        return ($this->resource ?? $this->resource())::collection($resource);
     }
 
 
@@ -76,7 +81,7 @@ class Service
     {
         $limit = request()->integer('limit');
         $limit = $limit > 0 ? request()->integer('limit') : config('3kjos-command.route.pagination.limit', 10);
-        $query = call_user_func([$this->model, 'query']);
+        $query = call_user_func([($this->model ?? $this->model()), 'query']);
         $query = $query->paginate($limit);
 
         return $this->resourcesCollection($query);
@@ -91,8 +96,8 @@ class Service
      */
     public function show($id): \Illuminate\Http\Resources\Json\JsonResource
     {
-        $model = $this->model::findOrFail($id);
-        return $this->resource($model);
+        $model = ($this->model ?? $this->model())::findOrFail($id);
+        return $this->resources($model);
     }
 
     /**
@@ -104,23 +109,23 @@ class Service
      */
     public function store(array $data): \Illuminate\Http\Resources\Json\JsonResource
     {
-        $model = $this->model::create($this->saveFile($data));
+        $model = ($this->model ?? $this->model())::create($this->saveFile($data));
         if (!empty($this->dispatchEvents) && $event = data_get($this->dispatchEvents, 'created', null)) {
             $event::dispatch($model);
         }
-        return $this->resource($model);
+        return $this->resources($model);
     }
 
     public function update(int $id, array $data): \Illuminate\Http\Resources\Json\JsonResource
     {
-        $model = $this->model::findOrFail($id);
+        $model = ($this->model ?? $this->model())::findOrFail($id);
         if (count($data)) {
             $model->update($this->saveFile($data, true, $model));
             if (!empty($this->dispatchEvents) && $event = data_get($this->dispatchEvents, 'updated', null)) {
                 $event::dispatch($model);
             }
         }
-        return $this->resource($model);
+        return $this->resources($model);
     }
 
     /**
@@ -131,7 +136,7 @@ class Service
      */
     public function destroy(int $id): \Illuminate\Http\Response
     {
-        $model = call_user_func([$this->model, 'find'], (int) $id);
+        $model = call_user_func([($this->model ?? $this->model()), 'find'], (int) $id);
 
         if ($model) {
             if ($model->{$this->fileKey()}) {
