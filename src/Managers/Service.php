@@ -176,7 +176,6 @@ class Service
         $file = data_get($data, $this->fileKey());
 
         if (! $file instanceof UploadedFile) {
-            $data[$this->fileKey()] = $file;
             return $data;
         }
 
