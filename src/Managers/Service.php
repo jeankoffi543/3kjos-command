@@ -171,21 +171,21 @@ class Service
      * The key of the file in the $data array is determined by the $this->fileKey() parameter.
      * If the $this->fileKey() parameter is not given, the key will be 'image'.
      */
-    public function saveFile($data, $update = false, $model = null): array
+   public function saveFile($data, $update = false, $model = null): array
     {
         $file = data_get($data, $this->fileKey());
-
         if (! $file instanceof UploadedFile) {
             return $data;
         }
 
         if ($update && $model) {
-            Storage::delete($model->{$this->fileKey()});
+            $existingFile = $model->{$this->fileKey()};
+            if ($existingFile) {
+                Storage::delete($existingFile);
+            }
         }
-
         $fileName = Str::ulid() . '.' . $file->getClientOriginalExtension();
         $data[$this->fileKey()] = $file->storeAs($this->filePath(), $fileName);
-
         return $data;
     }
 
