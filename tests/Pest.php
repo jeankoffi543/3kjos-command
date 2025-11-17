@@ -12,7 +12,7 @@
 */
 
 uses(
-    Kjos\Command\Tests\TestCase::class,
+    Kjos\ParameterMapper\Tests\TestCase::class,
     // Illuminate\Foundation\Testing\RefreshDatabase::class
 )->in('Feature', 'Unit');
 

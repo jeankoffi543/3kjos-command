@@ -15,13 +15,5 @@ class TestCase extends Orchestra
     protected function tearDown(): void
     {
         parent::tearDown();
-        removeTestDirectory();
-    }
-
-    protected function getPackageProviders($app)
-    {
-        return [
-            \Kjos\Command\CommandServiceProvider::class,
-        ];
     }
 }

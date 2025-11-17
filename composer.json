@@ -1,6 +1,6 @@
 {
-  "name": "kjos/command",
-  "description": "Command tool for Laravel and other",
+  "name": "kjos/kjos-laravel-parameter-mapper",
+  "description": "ParameterMapper tool for Laravel and other",
   "license": "MIT",
   "authors": [
     {
@@ -11,7 +11,7 @@
   "repositories": [
     {
       "type": "vcs",
-      "url": "https://github.com/jeankoffi543/3kjos-command.git",
+      "url": "https://github.com/jeankoffi543/kjos-laravel-parameter-mapper.git",
       "options": {
         "symlink": true
       }
@@ -27,22 +27,19 @@
 },
   "autoload": {
     "psr-4": {
-      "Kjos\\Command\\": "src/"
-    },
-    "files":[
-      "src/helpers.php"
-    ]
+      "Kjos\\ParameterMapper\\": "src/"
+    }
   },
   "autoload-dev": {
     "psr-4": {
-        "Kjos\\Command\\Tests\\": "tests/",
+        "Kjos\\ParameterMapper\\Tests\\": "tests/",
         "App\\": "vendor/orchestra/testbench-core/laravel/app/"
     }
 },
   "extra": {
     "laravel": {
       "providers": [
-        "Kjos\\Command\\CommandServiceProvider"
+        "Kjos\\ParameterMapper\\ParameterMapperServiceProvider"
       ]
     }
   },
