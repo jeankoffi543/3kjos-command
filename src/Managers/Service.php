@@ -116,7 +116,7 @@ class Service
         return $this->resources($model);
     }
 
-    public function update(int $id, array $data): \Illuminate\Http\Resources\Json\JsonResource
+    public function update(mixed $id, array $data): \Illuminate\Http\Resources\Json\JsonResource
     {
         $model = ($this->model ?? $this->model())::findOrFail($id);
         if (count($data)) {
@@ -131,10 +131,10 @@ class Service
     /**
      * Delete a model by ID.
      *
-     * @param int $id the ID of the model to delete
+     * @param mixed $id the ID of the model to delete
      * @return \Illuminate\Http\Response
      */
-    public function destroy(int $id): \Illuminate\Http\Response
+    public function destroy(mixed $id): \Illuminate\Http\Response
     {
         $model = call_user_func([($this->model ?? $this->model()), 'find'], (int) $id);
 

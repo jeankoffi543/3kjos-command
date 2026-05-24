@@ -86,7 +86,7 @@ class TestKitProvider
 
             \$guest{$this->factory->getModelName()} = \$guest{$this->factory->getModelName()}->toArray();
 
-            \$this->put('/api/{$this->factory->getRouteName()}/\$created{$this->factory->getModelName()}->{$id}', \$guest{$this->factory->getModelName()})
+            \$this->put("/api/{$this->factory->getRouteName()}/{\$created{$this->factory->getModelName()}->{$id}}", \$guest{$this->factory->getModelName()})
                ->assertOk();
          })->with('guest {$this->factory->getNameSingularLower()}')->with('created {$this->factory->getNameSingularLower()}');
 
@@ -96,7 +96,7 @@ class TestKitProvider
 
             \$guest{$this->factory->getModelName()} = \$guest{$this->factory->getModelName()}->toArray();
 
-            \$this->put('/api/{$this->factory->getRouteName()}/\$created{$this->factory->getModelName()}->{$id}', \$guest{$this->factory->getModelName()})
+            \$this->put("/api/{$this->factory->getRouteName()}/{\$created{$this->factory->getModelName()}->{$id}}", \$guest{$this->factory->getModelName()})
                ->assertBadRequest();
          })->with('guest {$this->factory->getNameSingularLower()}');
       });
@@ -160,7 +160,7 @@ class TestKitProvider
       $content = <<< DESCRIBE
       describe('Should get detail {$this->factory->getNameSingularLower()}', function () {
          it('Get {$this->factory->getNameSingularLower()}', function (\$created{$this->factory->getModelName()}) {
-            \$this->get('/api/{$this->factory->getRouteName()}/\$created{$this->factory->getModelName()}[0]->{$id}')
+            \$this->get("/api/{$this->factory->getRouteName()}/{\$created{$this->factory->getModelName()}[0]->{$id}}")
                ->assertOk();
          })->with('created {$this->factory->getNamePluralLower()}');
       });
@@ -175,7 +175,7 @@ class TestKitProvider
       $content = <<< DESCRIBE
       describe('Should Delete {$this->factory->getNameSingularLower()}', function () {
          it('delete {$this->factory->getNameSingularLower()}', function (\$created{$this->factory->getModelName()}) {
-            \$this->delete('/api/{$this->factory->getRouteName()}/\$created{$this->factory->getModelName()}[0]->{$id}')
+            \$this->delete("/api/{$this->factory->getRouteName()}/{\$created{$this->factory->getModelName()}[0]->{$id}}")
                ->assertOk();
          })->with('created {$this->factory->getNamePluralLower()}');
       });
