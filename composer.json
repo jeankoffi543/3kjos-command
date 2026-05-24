@@ -1,7 +1,7 @@
 {
   "name": "kjos/command",
   "description": "Command tool for Laravel and other",
-  "version": "3.3.5",
+  "version": "4.0.0",
   "license": "MIT",
   "authors": [
     {
@@ -20,11 +20,11 @@
   ],
   "require": {
     "php": "^8.2",
-    "illuminate/support": "^8.0 || ^9.0 || ^10.0 || ^11.0 ||^12.0",
-    "illuminate/database": "^8.0 || ^9.0 || ^10.0 || ^11.0 || ^12.0",
-    "illuminate/console": "^8.0 || ^9.0 || ^10.0 || ^11.0 || ^12.0",
-    "illuminate/routing": "^8.0 || ^9.0 || ^10.0 || ^11.0 || ^12.0",
-    "laravel/pint": "^1.20",
+    "illuminate/support": "^8.0 || ^9.0 || ^10.0 || ^11.0 || ^12.0 || ^13.0",
+    "illuminate/database": "^8.0 || ^9.0 || ^10.0 || ^11.0 || ^12.0 || ^13.0",
+    "illuminate/console": "^8.0 || ^9.0 || ^10.0 || ^11.0 || ^12.0 || ^13.0",
+    "illuminate/routing": "^8.0 || ^9.0 || ^10.0 || ^11.0 || ^12.0 || ^13.0",
+    "laravel/pint": "^1.27",
     "nikic/php-parser": "^5.5",
     "spatie/laravel-permission": "^6.20",
     "archtechx/enums": "^1.1"
@@ -65,14 +65,14 @@
   },
   "require-dev": {
     "phpstan/phpstan": "^0.12",
-    "nunomaduro/collision": "^5.0",
+    "nunomaduro/collision": "^8.6",
     "fakerphp/faker": "^1.23",
     "phpro/grumphp": "^2.5",
     "mockery/mockery": "^1.6",
-    "pestphp/pest": "^1.23",
-    "orchestra/testbench": "^6.47",
+    "pestphp/pest": "^4.0",
+    "orchestra/testbench": "^10.0",
     "pestphp/pest-plugin": "^1.1",
-    "pestphp/pest-plugin-laravel": "^1.4",
-    "phpunit/phpunit": "^9.5"
+    "pestphp/pest-plugin-laravel": "^4.0",
+    "phpunit/phpunit": "^12.0"    
   }
 }
